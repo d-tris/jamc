@@ -7,6 +7,7 @@ import GL.glfw;
 
 version( server ) import jamc.server.graphics;
 version( client ) import jamc.client.graphics;
+import jamc.common.logger;
 
 class JamcGame : IGame
 {
@@ -23,6 +24,9 @@ class JamcGame : IGame
     }
     override int run()
     {
+        Logger l = new Logger("test.log");
+        version( client ) l.notice("Client is starting...");
+        version( server ) l.notice("Server is starting...");
         bool run = true;
         while( run )
         {
