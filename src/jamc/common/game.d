@@ -5,9 +5,11 @@ import jamc.api.graphics;
 
 import GL.glfw;
 
+import jamc.common.logger;
+import jamc.common.configuration;
+
 version( server ) import jamc.server.graphics;
 version( client ) import jamc.client.graphics;
-import jamc.common.logger;
 
 class JamcGame : IGame
 {
@@ -21,12 +23,14 @@ class JamcGame : IGame
         {
             m_graphicsMgr = new ClientGraphicsMgr();
         }
+        logger = new Logger( Logger.level.notice, true, "test.log" );
+        configuration = new Configuration( "config.xml" );
     }
     override int run()
     {
-        Logger l = new Logger("test.log");
-        version( client ) l.notice("Client is starting...");
-        version( server ) l.notice("Server is starting...");
+        version( client ) logger.notice("Client is starting...");
+        version( server ) logger.notice("Server is starting...");
+        
         bool run = true;
         while( run )
         {
@@ -47,6 +51,8 @@ class JamcGame : IGame
     
 private:
     IGraphicsMgr m_graphicsMgr;
+    Logger logger;
+    Configuration configuration;
 }
 
 int main()

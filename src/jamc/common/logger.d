@@ -2,13 +2,21 @@ module jamc.common.logger;
 
 import std.stdio;
 
-class Logger {
-    
+class Logger
+{
+private:
     File f;
+    level logLevel;
+    bool toConsole;
     
-    this(string filename) // Konstruktor
+public:
+    enum level { notice=1, warning=2, error=3 };
+    
+    this(level logLevel, bool toConsole, string filename) // Konstruktor
     {
         f = File(filename, "a");
+        this.logLevel = logLevel;
+        this.toConsole = toConsole;
     }
     
     ~this() // Destruktor
@@ -18,20 +26,26 @@ class Logger {
     
     void notice(string text)
     {
-        f.write("Notice: ");
-        f.writeln(text);
+        if(logLevel<=level.notice){
+            f.writeln( "Notice: " ~ text );
+            if(toConsole) writeln( "Notice: " ~ text );
+        }
     }
     
     void warning(string text)
     {
-        f.write("Warning: ");
-        f.writeln(text);
+        if(logLevel<=level.warning){
+            f.writeln( "Warning: " ~ text );
+            if(toConsole) writeln( "Warning: " ~ text );
+        }
     }
     
     void error(string text)
     {
-        f.write("Error: ");
-        f.writeln(text);
+        if(logLevel<=level.error){
+            f.writeln( "Error: " ~ text );
+            if(toConsole) writeln( "Error: " ~ text );
+        }
     }
     
 }
