@@ -1,50 +1,66 @@
 module jamc.common.logger;
+import jamc.api.logger;
+import jamc.api.game;
 
 import std.stdio;
+import std.datetime;
 
-class Logger
+class Logger : ILogger
 {
 private:
     File f;
     level logLevel;
     bool toConsole;
+    IGame game;
     
 public:
     enum level { notice=1, warning=2, error=3 };
     
-    this(level logLevel, bool toConsole, string filename) // Konstruktor
+    this(IGame game, level logLevel, bool toConsole, string filename)
     {
         f = File(filename, "a");
         this.logLevel = logLevel;
         this.toConsole = toConsole;
+        this.game = game;
     }
     
-    ~this() // Destruktor
+    ~this()
     {
         f.close();
+    }
+    
+    string getTime()
+    {
+        auto st = Clock.currTime();
+        auto dateTime = cast(DateTime)st;
+        return dateTime.toString();
+        
     }
     
     void notice(string text)
     {
         if(logLevel<=level.notice){
-            f.writeln( "Notice: " ~ text );
-            if(toConsole) writeln( "Notice: " ~ text );
+            string output = getTime() ~ " Notice: " ~ text;
+            f.writeln( output );
+            if(toConsole) writeln( output );
         }
     }
     
     void warning(string text)
     {
         if(logLevel<=level.warning){
-            f.writeln( "Warning: " ~ text );
-            if(toConsole) writeln( "Warning: " ~ text );
+            string output = getTime() ~ " Warning: " ~ text;
+            f.writeln( output );
+            if(toConsole) writeln( output );
         }
     }
     
     void error(string text)
     {
         if(logLevel<=level.error){
-            f.writeln( "Error: " ~ text );
-            if(toConsole) writeln( "Error: " ~ text );
+            string output = getTime() ~ " Error: " ~ text;
+            f.writeln( output );
+            if(toConsole) writeln( output );
         }
     }
     

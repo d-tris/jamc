@@ -2,6 +2,8 @@ module jamc.common.game;
 
 import jamc.api.game;
 import jamc.api.graphics;
+import jamc.api.logger;
+import jamc.api.configuration;
 
 import GL.glfw;
 
@@ -13,6 +15,11 @@ version( client ) import jamc.client.graphics;
 
 class JamcGame : IGame
 {
+private:
+    ILogger loggerObject;
+    IConfiguration configurationObject;
+    IGraphicsMgr m_graphicsMgr;
+public:
     this()
     {
         version( server )
@@ -23,13 +30,13 @@ class JamcGame : IGame
         {
             m_graphicsMgr = new ClientGraphicsMgr();
         }
-        logger = new Logger( Logger.level.notice, true, "test.log" );
-        configuration = new Configuration( "config.xml" );
+        loggerObject = new Logger( this, Logger.level.notice, true, "test.log" );
+        configurationObject = new Configuration( this, "config.xml" );
     }
     override int run()
     {
-        version( client ) logger.notice("Client is starting...");
-        version( server ) logger.notice("Server is starting...");
+        version( client ) logger.notice("client is starting...");
+        version( server ) logger.notice("server is starting...");
         
         bool run = true;
         while( run )
@@ -48,11 +55,12 @@ class JamcGame : IGame
         }
         return 0;
     }
-    
-private:
-    IGraphicsMgr m_graphicsMgr;
-    Logger logger;
-    Configuration configuration;
+    ILogger logger(){
+        return loggerObject;
+    }
+    IConfiguration configuration(){
+        return configurationObject;
+    }
 }
 
 int main()

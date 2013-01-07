@@ -1,5 +1,8 @@
 module jamc.api.game;
 
+import jamc.api.logger;
+import jamc.api.configuration;
+
 interface IGame
 {
     /**
@@ -7,4 +10,7 @@ interface IGame
      * Vraci cislo pouzitelne jako navratovy kod aplikace.
      */
     int run();
+    
+    @property ILogger logger();
+    @property IConfiguration configuration();
 }
