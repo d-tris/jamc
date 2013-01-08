@@ -37,28 +37,28 @@ public:
         
     }
     
-    void notice(string text)
+    void notice(lazy string text)
     {
         if(logLevel<=level.notice){
-            string output = getTime() ~ " Notice: " ~ text;
+            string output = getTime() ~ " Notice: " ~ text();
             f.writeln( output );
             if(toConsole) writeln( output );
         }
     }
     
-    void warning(string text)
+    void warning(lazy string text)
     {
         if(logLevel<=level.warning){
-            string output = getTime() ~ " Warning: " ~ text;
+            string output = getTime() ~ " Warning: " ~ text();
             f.writeln( output );
             if(toConsole) writeln( output );
         }
     }
     
-    void error(string text)
+    void error(lazy string text)
     {
         if(logLevel<=level.error){
-            string output = getTime() ~ " Error: " ~ text;
+            string output = getTime() ~ " Error: " ~ text();
             f.writeln( output );
             if(toConsole) writeln( output );
         }
