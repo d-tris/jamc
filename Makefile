@@ -2,7 +2,7 @@
 
 SRCDIR=src
 RDMDFLAGS=-g -I$(SRCDIR)
-CLIENTFLAGS=-L-lglfw
+CLIENTFLAGS=-L-lglfw -version=OpenGL
 SERVERFLAGS=
 
 all: server client

@@ -330,8 +330,8 @@ void    glfwSetTime( double time );
 void    glfwSleep( double time );
 
 // Extension support
-int    glfwExtensionSupported( char *extension );
-void*  glfwGetProcAddress(  char *procname );
+int    glfwExtensionSupported( const( char )* extension );
+void*  glfwGetProcAddress( const( char )* procname );
 void   glfwGetGLVersion( int *major, int *minor, int *rev );
 
 // Threading support

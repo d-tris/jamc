@@ -22,16 +22,16 @@ private:
 public:
     this()
     {
+        loggerObject = new Logger( this, Logger.level.notice, true, "test.log" );
+        configurationObject = new Configuration( this, "config.xml" );
         version( server )
         {
             m_graphicsMgr = new ServerGraphicsMgr();
         }
         version( client )
         {
-            m_graphicsMgr = new ClientGraphicsMgr();
+            m_graphicsMgr = new ClientGraphicsMgr( this );
         }
-        loggerObject = new Logger( this, Logger.level.notice, true, "test.log" );
-        configurationObject = new Configuration( this, "config.xml" );
     }
     override int run()
     {
