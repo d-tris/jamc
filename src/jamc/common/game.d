@@ -1,9 +1,10 @@
 module jamc.common.game;
 
+import std.stdio;
+import std.conv;
 import jamc.api.game;
 import jamc.api.graphics;
 import jamc.api.logger;
-import jamc.api.configuration;
 
 import GL.glfw;
 
@@ -17,13 +18,15 @@ class JamcGame : IGame
 {
 private:
     ILogger loggerObject;
-    IConfiguration configurationObject;
+    ServerConf configuration;
     IGraphicsMgr m_graphicsMgr;
 public:
     this()
     {
         loggerObject = new Logger( this, Logger.level.notice, true, "test.log" );
-        configurationObject = new Configuration( this, "config.xml" );
+        loadConfiguration!(ServerConf)(this,configuration,"config.xml");
+        writeln("servername: "~configuration.servername);
+        writeln("port: "~to!string(configuration.port));
         version( server )
         {
             m_graphicsMgr = new ServerGraphicsMgr();
@@ -57,9 +60,6 @@ public:
     }
     ILogger logger(){
         return loggerObject;
-    }
-    IConfiguration configuration(){
-        return configurationObject;
     }
 }
 
