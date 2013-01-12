@@ -1,5 +1,6 @@
 module jamc.common.configuration;
 import jamc.api.game;
+import jamc.api.configuration;
 
 import std.xml;
 import std.variant;
@@ -10,11 +11,6 @@ import std.traits;
 import jamc.common.logger;
 import jamc.common.game;
 
-struct ServerConf {
-    string servername;
-    int port;
-}
-
 void loadConfiguration( T )( IGame game, out T data, string filename ){
     try{
         string file = cast(string) read( filename );
@@ -23,7 +19,12 @@ void loadConfiguration( T )( IGame game, out T data, string filename ){
         
         void onEnd( string target )( in Element e )
         {
-            __traits( getMember, data, target ) = to!( typeof( __traits( getMember, data, target ) ) )( e.text() );
+            try{
+                __traits( getMember, data, target ) = to!( typeof( __traits( getMember, data, target ) ) )( e.text() );
+            }
+            catch(ConvException e){
+                game.logger.error( "bad data type of " ~ target ~ " in configuration file: " ~ filename );
+            }
         }
         
         foreach( member; __traits(allMembers, T) )
@@ -39,6 +40,6 @@ void loadConfiguration( T )( IGame game, out T data, string filename ){
     catch(CheckException e){
         game.logger.error( "bad validation result of configuration file: " ~ filename );
     }
-    game.logger.notice("configuration loaded");
+    game.logger.notice( "configuration loaded" );
 }
 

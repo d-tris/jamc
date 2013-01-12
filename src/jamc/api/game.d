@@ -1,5 +1,4 @@
 module jamc.api.game;
-
 import jamc.api.logger;
 
 interface IGame

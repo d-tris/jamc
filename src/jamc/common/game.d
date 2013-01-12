@@ -5,11 +5,13 @@ import std.conv;
 import jamc.api.game;
 import jamc.api.graphics;
 import jamc.api.logger;
+import jamc.api.configuration;
 
 import GL.glfw;
 
 import jamc.common.logger;
 import jamc.common.configuration;
+import jamc.server.sockets;
 
 version( server ) import jamc.server.graphics;
 version( client ) import jamc.client.graphics;
@@ -20,13 +22,18 @@ private:
     ILogger loggerObject;
     ServerConf configuration;
     IGraphicsMgr m_graphicsMgr;
+    version(server) SocketServer socketserver;
 public:
     this()
     {
-        loggerObject = new Logger( this, Logger.level.notice, true, "test.log" );
+        version( server ){
+            loggerObject = new Logger( this, Logger.level.notice, true, "server.log" );
+        }
+        version( client ){
+            loggerObject = new Logger( this, Logger.level.notice, true, "client.log" );
+        }
         loadConfiguration!(ServerConf)(this,configuration,"config.xml");
-        writeln("servername: "~configuration.servername);
-        writeln("port: "~to!string(configuration.port));
+        
         version( server )
         {
             m_graphicsMgr = new ServerGraphicsMgr();
@@ -54,8 +61,11 @@ public:
             // abstrakci, ale zatim staci tohle
             version( client ) run = cast( bool ) glfwGetWindowParam( GLFW_OPENED );
             version( server ) run = false;
-
+            
         }
+        
+        version( server ) socketserver = new SocketServer( this, configuration );
+        
         return 0;
     }
     ILogger logger(){

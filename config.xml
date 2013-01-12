@@ -1,4 +1,5 @@
 <jamc>
  <servername>Alfa</servername>
  <port>1234</port>
+ <maxconnections>100</maxconnections>
 </jamc>
