@@ -11,7 +11,8 @@ import GL.glfw;
 
 import jamc.common.logger;
 import jamc.common.configuration;
-import jamc.server.sockets;
+version( server ) import jamc.server.sockets;
+version( client ) import jamc.client.sockets;
 
 version( server ) import jamc.server.graphics;
 version( client ) import jamc.client.graphics;
@@ -20,20 +21,23 @@ class JamcGame : IGame
 {
 private:
     ILogger loggerObject;
-    ServerConf configuration;
+    version(server) ServerConf serverconf;
+    version(client) ClientConf clientconf;
     IGraphicsMgr m_graphicsMgr;
     version(server) SocketServer socketserver;
+    version(client) SocketClient socketclient;
 public:
     this()
     {
         version( server ){
             loggerObject = new Logger( this, Logger.level.notice, true, "server.log" );
+            loadConfiguration!(ServerConf)(this,serverconf,"server.xml");
         }
         version( client ){
             loggerObject = new Logger( this, Logger.level.notice, true, "client.log" );
+            loadConfiguration!(ClientConf)(this,clientconf,"client.xml");
+            socketclient = new SocketClient(this,clientconf.server,clientconf.port);
         }
-        loadConfiguration!(ServerConf)(this,configuration,"config.xml");
-        
         version( server )
         {
             m_graphicsMgr = new ServerGraphicsMgr();
@@ -47,6 +51,11 @@ public:
     {
         version( client ) logger.notice("client is starting...");
         version( server ) logger.notice("server is starting...");
+        
+        version( client ){
+            socketclient.connect();
+            socketclient.disconnect();
+        }
         
         bool run = true;
         while( run )
@@ -64,7 +73,7 @@ public:
             
         }
         
-        version( server ) socketserver = new SocketServer( this, configuration );
+        version( server ) socketserver = new SocketServer( this, serverconf );
         
         return 0;
     }

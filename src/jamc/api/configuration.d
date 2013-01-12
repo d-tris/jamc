@@ -6,3 +6,8 @@ struct ServerConf {
     uint maxconnections;
 }
 
+struct ClientConf {
+    string server;
+    ushort port;
+}
+

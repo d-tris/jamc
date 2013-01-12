@@ -5,7 +5,6 @@ import jamc.api.configuration;
 
 import std.stdio;
 import std.socket;
-import core.thread;
 
 class SocketServer
 {
