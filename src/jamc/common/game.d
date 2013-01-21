@@ -2,6 +2,7 @@ module jamc.common.game;
 
 import std.stdio;
 import std.conv;
+import core.thread;
 import jamc.api.game;
 import jamc.api.graphics;
 import jamc.api.logger;
@@ -54,6 +55,9 @@ public:
         
         version( client ){
             socketclient.connect();
+            socketclient.write("ahoj servere!\0");
+            Thread.sleep( dur!("msecs")( 100 ) );
+            socketclient.tryRead();
             socketclient.disconnect();
         }
         
@@ -73,7 +77,17 @@ public:
             
         }
         
-        version( server ) socketserver = new SocketServer( this, serverconf );
+        version( server ){
+            socketserver = new SocketServer( this, serverconf );
+            while(true){
+                socketserver.handleClients();
+                
+                // dalsi logika serveru
+                socketserver.writeToAll("ahoj klienti!\0"); // demo
+                
+                Thread.sleep( dur!("msecs")( 50 ) );
+            }
+        }
         
         return 0;
     }

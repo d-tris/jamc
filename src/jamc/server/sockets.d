@@ -5,91 +5,80 @@ import jamc.api.configuration;
 
 import std.stdio;
 import std.socket;
+import std.socketstream;
+import std.conv;
+import core.thread;
 
 class SocketServer
 {
+private:
+    IGame game;
     ServerConf configuration;
+    Socket listener;
+    Socket[] clients;
+    
+public:
     
     this(IGame game, ServerConf configuration){
+        this.game = game;
         this.configuration = configuration;
-        
-        // podle https://github.com/D-Programming-Language/dmd/blob/master/samples/listener.d
-        
-        Socket listener = new TcpSocket;
-        assert(listener.isAlive);
+        listener = new TcpSocket;
         listener.blocking = false;
         listener.bind(new InternetAddress(configuration.port));
         listener.listen(10);
+    }
+    
+    ~this(){
+        listener.close();
+    }
+    
+    void killClient(int i){
+        clients[i].close();
+        if(i != clients.length-1) clients[i] = clients[clients.length - 1];
+        clients = clients[0 .. clients.length - 1];
+        game.logger.notice("client closed connection");
+    }
+    
+    void handleClients(){
+        // Prijem novych klientu
+        try{
+            Socket newsocket = listener.accept();
+            newsocket.blocking = false;
+            clients ~= newsocket;
+            game.logger.notice("client opened connection");
+        }
+        catch(SocketAcceptException e){}
         
-        SocketSet sset = new SocketSet(configuration.maxconnections + 1);
-        Socket[]  reads;
-        
-        for (;; sset.reset()) {
-            sset.add(listener);
-            foreach (Socket each; reads) {
-                sset.add(each);
-            }
-            Socket.select(sset, null, null);
-            int i;
-            for (i = 0;; i++) {
-        next:
-                if (i == reads.length) break;
-                if (sset.isSet(reads[i])) {
-                    char[1024] buf;
-                    int read = cast(int)reads[i].receive(buf);
-                    
-                    if (Socket.ERROR == read) {
-                        writeln("Connection error.");
-                        goto sock_down;
-                    }
-                    else if (0 == read) {
-                        try{
-                            // if the connection closed due to an error, remoteAddress() could fail
-                            writefln("Connection from %s closed.", reads[i].remoteAddress().toString());
-                        }
-                        catch (SocketException) {
-                            writeln("Connection closed.");
-                        }
-                    
-                     sock_down:
-                        reads[i].close(); // release socket resources now
-                        // remove from -reads-
-                        if (i != reads.length - 1) reads[i] = reads[reads.length - 1];
-                        reads = reads[0 .. reads.length - 1];
-                        writefln("\tTotal connections: %d", reads.length);
-                        goto next; // -i- is still the next index
-                    } else {
-                        writefln("Received %d bytes from %s: \"%s\"", read, reads[i].remoteAddress().toString(), buf[0 .. read]);
-                    }
-                }
-            }
+        // Naslouchani klientum
+        char buffer[] = new char[32];
+        for(int i=0 ; i < clients.length ; i++){
+            long loaded = clients[i].receive(buffer);
             
-            if (sset.isSet(listener)) { // connection request
-                Socket sn;
-                try {
-                    if (reads.length < configuration.maxconnections) {
-                        sn = listener.accept();
-                        writefln("Connection from %s established.", sn.remoteAddress().toString());
-                        assert(sn.isAlive);
-                        assert(listener.isAlive);
-                        
-                        reads ~= sn;
-                        writefln("\tTotal connections: %d", reads.length);
-                    } else {
-                        sn = listener.accept();
-                        writefln("Rejected connection from %s; too many connections.", sn.remoteAddress().toString());
-                        assert(sn.isAlive);
-                        sn.close();
-                        assert(!sn.isAlive);
-                        assert(listener.isAlive);
-                    }
-                }
-                catch (Exception e) {
-                    writefln("Error accepting: %s", e.toString());
-                    if (sn) sn.close();
-                }
-            } // endif
-        } // endfor
+            if(loaded == Socket.ERROR){
+                killClient(i);
+                continue;
+            }
+            if(loaded > 0){
+                
+                // TODO: zde by se pak melo rozparsovat co dorazilo a zavolat patricne funkce
+                game.logger.notice("readed " ~ to!string(loaded) ~ " bytes from the server: " ~ to!string(buffer));
+                
+            }
+        }
+    }
+    
+    void write(int i, const(void)[] data){
+        game.logger.notice("writing to client " ~ to!string(i) ~ "...");
+        if(clients[i].send(data) == Socket.ERROR){
+            killClient(i);
+            game.logger.warning("cannot write to client " ~ to!string(i) ~ "!");
+        }
+    }
+    
+    void writeToAll(const(void)[] data){
+        for(int i=0 ; i < clients.length ; i++){
+            write(i,data);
+        }
     }
 }
 
