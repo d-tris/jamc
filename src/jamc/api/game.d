@@ -1,5 +1,9 @@
 module jamc.api.game;
+
+import jamc.api.events;
+import jamc.api.graphics;
 import jamc.api.logger;
+
 
 interface IGame
 {
@@ -9,5 +13,7 @@ interface IGame
      */
     int run();
     
+    @property IEventDispatcher events();
+    @property IGraphicsMgr gfx();
     @property ILogger logger();
 }
