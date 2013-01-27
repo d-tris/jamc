@@ -20,6 +20,8 @@ class ClientGraphicsMgr : IGraphicsMgr
         glfwInit();
         enforce( glfwOpenWindow( 720, 560, 8, 8, 8, 8, 24, 8, GLFW_WINDOW ) == GL_TRUE, "Couldn't create window." );
 
+        m_ogl = new OGL();
+
         int n;
         foreach( member; __traits( allMembers, OGL ) )
         {
@@ -62,7 +64,7 @@ class ClientGraphicsMgr : IGraphicsMgr
         glfwSwapBuffers();
     }
     
-    override @property ref OGL ogl()
+    override @property OGL ogl()
     {
         return m_ogl;
     }
