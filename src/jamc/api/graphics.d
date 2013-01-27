@@ -4,7 +4,7 @@ interface IGraphicsMgr
 {
     void beginFrame();
     void finishFrame();
-    @property ref OGL ogl();
+    @property OGL ogl();
 }
 
 version( OpenGL )
@@ -17,7 +17,7 @@ version( OpenGL )
     alias GLintptr = size_t;
     alias GLsizeiptr = size_t;
 
-    struct OGL
+    class OGL
     {
         struct LoadGL( inNames... )
         {

@@ -10,7 +10,7 @@ class ServerGraphicsMgr : IGraphicsMgr
     override void finishFrame()
     {}
     
-    override @property ref OGL ogl()
+    override @property OGL ogl()
     {
         throw new Exception( "OpenGL rendering not enabled on JAMC server" );
     }
