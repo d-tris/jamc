@@ -39,16 +39,17 @@ public:
         
         version( server ){
             loggerObject = new Logger( this, Logger.level.notice, true, "server.log" );
-            loadConfiguration!(ServerConf)(this,serverconf,"server.xml");
+            loadConfiguration!(ServerConf)( this, serverconf, "server.xml" );
             
             m_graphicsMgr = new ServerGraphicsMgr();
         }
         version( client ){
             loggerObject = new Logger( this, Logger.level.notice, true, "client.log" );
-            loadConfiguration!(ClientConf)(this,clientconf,"client.xml");
-            socketclient = new SocketClient(this,clientconf.server,clientconf.port);
+            loadConfiguration!(ClientConf)( this, clientconf, "client.xml" );
+            socketclient = new SocketClient( this, clientconf );
             
-            m_graphicsMgr = new ClientGraphicsMgr( this );
+            //m_graphicsMgr = new ClientGraphicsMgr( this ); // zpusobi Segmentation fault ( Syscall param ioctl(generic) points to uninitialised byte(s) )
+            
         }
     }
     override int run()
@@ -59,9 +60,6 @@ public:
         version( client ){
             socketclient.connect();
             socketclient.write("ahoj servere!\0");
-            Thread.sleep( dur!("msecs")( 100 ) );
-            socketclient.tryRead();
-            socketclient.disconnect();
         }
         
         bool run = true;
@@ -72,11 +70,16 @@ public:
         
         version(client) while( run )
         {
+            socketclient.handleServer();
+            socketclient.write("vzbud se ty servre jeden!\0");
+            
             //herni logika jde sem
             
-            m_graphicsMgr.beginFrame();
+            //m_graphicsMgr.beginFrame();
             // kresleni sceny jde sem
-            m_graphicsMgr.finishFrame();
+            //m_graphicsMgr.finishFrame();
+            
+            Thread.sleep( dur!("msecs")( 200 ) );
         }
         
         version( server ){
@@ -85,9 +88,8 @@ public:
                 socketserver.handleClients();
                 
                 // dalsi logika serveru
-                socketserver.writeToAll("ahoj klienti!\0"); // demo
                 
-                Thread.sleep( dur!("msecs")( 50 ) );
+                Thread.sleep( dur!("msecs")( 200 ) );
             }
         }
         

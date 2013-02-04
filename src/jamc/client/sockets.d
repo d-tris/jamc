@@ -7,6 +7,7 @@ import std.stdio;
 import std.socket;
 import std.stream;
 import std.socketstream;
+import std.digest.sha;
 
 import std.conv;
 import core.thread;
@@ -15,21 +16,23 @@ class SocketClient
 {
 private:
     IGame game;
-    string serverAddr;
-    ushort serverPort;
+    ClientConf configuration;
     Socket server;
 
 public:
-    this(IGame game, string serverAddr, ushort serverPort){
+    this(IGame game, ClientConf configuration){
         this.game = game;
-        this.serverAddr = serverAddr;
-        this.serverPort = serverPort;
+        this.configuration = configuration;
+    }
+    ~this(){
+        disconnect();
     }
     
     void connect(){
         game.logger.notice("connecting to the server...");
-        server = new TcpSocket(new InternetAddress(serverAddr,serverPort));
+        server = new UdpSocket();
         server.blocking = false;
+        server.connect(new InternetAddress(configuration.server,configuration.port));
     }
     
     void disconnect(){
@@ -50,13 +53,10 @@ public:
         }
     }
     
-    void tryRead(){
+    void handleServer(){
         char buffer[] = new char[32];
         auto loaded = server.receive(buffer);
-        if(loaded == Socket.ERROR){
-            game.logger.warning("cannot read from the server!");
-        }
-        if(loaded > 0){
+        if( loaded != Socket.ERROR && loaded > 0 ){ // pokud server neco zaslal
             
             // TODO: zde by se pak melo rozparsovat co dorazilo a zavolat patricne funkce
             game.logger.notice("readed from the server: " ~ to!string(buffer));
@@ -65,4 +65,7 @@ public:
         }
     }
     
+    void login(){
+        //this.write( username ~ "\n" ~ cast(string) digest!SHA1(username ~ password) ~ "\0" );
+    }
 }
