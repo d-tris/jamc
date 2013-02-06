@@ -6,7 +6,6 @@ import jamc.api.configuration;
 import std.stdio;
 import std.socket;
 import std.stream;
-import std.socketstream;
 import std.digest.sha;
 
 import std.conv;
@@ -18,6 +17,7 @@ private:
     IGame game;
     ClientConf configuration;
     Socket server;
+    string username, password;
 
 public:
     this(IGame game, ClientConf configuration){
@@ -42,7 +42,7 @@ public:
     
     void reconnect(){
         connect();
-        // TODO: znovu prihlasit
+        login();
         disconnect();
     }
     
@@ -65,7 +65,14 @@ public:
         }
     }
     
+    void login(string username, string password){
+        this.username=username;
+        this.password=password;
+        this.login();
+    }
+    
     void login(){
-        //this.write( username ~ "\n" ~ cast(string) digest!SHA1(username ~ password) ~ "\0" );
+        string passwordhash = cast(string) digest!SHA1(username ~ password);
+        this.write( to!string(cast(char)0xFF) ~ to!string(cast(char)(username.length)) ~ username ~ to!string(cast(char)(passwordhash.length)) ~ passwordhash );
     }
 }

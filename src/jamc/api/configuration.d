@@ -9,5 +9,7 @@ struct ServerConf {
 struct ClientConf {
     string server;
     ushort port;
+    string login;
+    string password;
 }
 

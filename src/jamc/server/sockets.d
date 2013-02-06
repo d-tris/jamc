@@ -5,15 +5,9 @@ import jamc.api.configuration;
 
 import std.stdio;
 import std.socket;
-import std.socketstream;
+import std.digest.sha;
 import std.conv;
 import core.thread;
-
-class Client
-{
-    Address address;
-    string login; // pozdeji nahradit objektem hrace
-}
 
 class SocketServer
 {
@@ -21,6 +15,7 @@ private:
     IGame game;
     ServerConf configuration;
     Socket listener;
+    string[string] clients; // pole pripojenych klientu (zatim obsahuje login, pozdeji objekt hrace)    
     
 public:
     
@@ -37,7 +32,7 @@ public:
     }
     
     void handleClients(){
-        char buffer[] = new char[32];
+        char buffer[] = new char[128];
         Address from;
         long loaded = listener.receiveFrom(buffer,from);
         
@@ -45,10 +40,37 @@ public:
             
             game.logger.notice( "readed " ~ to!string(loaded) ~ " bytes from the client " ~ from.toAddrString() ~ ":" ~ from.toPortString() ~ ": " ~ to!string(buffer) );
             
-            // test odpovedi klientovi
-            listener.sendTo("ahoj kliente!\0", from);
-            writeln("odeslano");
-            
+            if(!clients.get(from.toString(),null)){ // neprihlaseny
+                
+                if(buffer[0]==0xFF){ // prihlasuje se
+                    
+                    string potentialUsername = to!string(buffer[ 2 .. 2+buffer[1] ]);
+                    string potentialPassword = to!string(buffer[ 2+buffer[1]+1 .. 2+buffer[1]+1 + buffer[2+buffer[1]] ]);
+                    
+                    // prozatim jsou prihlaseni vsichni, kteri zadaji heslo "bagr"
+                    
+                    if( potentialPassword == cast(string)digest!SHA1(potentialUsername ~ "bagr") ){
+                        // prihlasen
+                        clients[from.toString()] = potentialUsername;
+                        game.logger.notice( "Prihlasen \"" ~ potentialUsername ~ "\" s heslem \"" ~ potentialPassword ~ "\"" );
+                    }else{
+                        // pristup odepren
+                        listener.sendTo(to!string(cast(char)0xFE), from);
+                        game.logger.notice( "Pristup odepren pro \"" ~ potentialUsername ~ "\" s heslem \"" ~ potentialPassword ~ "\"" );
+                    }
+                    
+                }else{ // neprihlaseny a nevi o tom
+                    listener.sendTo(to!string(cast(char)0xFF), from);
+                }
+                
+            }else{ // prihlaseny
+                
+                game.logger.notice( "Ozval se klient " ~ clients[from.toString()] ~ " z " ~ from.toString() );
+                
+                // test odpovedi klientovi
+                listener.sendTo("ahoj kliente!\0", from);
+                
+            }
         }
     }
     

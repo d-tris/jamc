@@ -1,4 +1,6 @@
 <jamc>
  <server>localhost</server>
  <port>1234</port>
+ <login>jirka</login>
+ <password>bagr</password>
 </jamc>

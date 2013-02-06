@@ -3,6 +3,7 @@ module jamc.common.game;
 import std.stdio;
 import std.conv;
 import core.thread;
+import std.socket;
 
 import jamc.api.game;
 import jamc.api.events;
@@ -32,6 +33,7 @@ private:
     
     version(server) SocketServer socketserver;
     version(client) SocketClient socketclient;
+    
 public:
     this()
     {
@@ -40,7 +42,7 @@ public:
         version( server ){
             loggerObject = new Logger( this, Logger.level.notice, true, "server.log" );
             loadConfiguration!(ServerConf)( this, serverconf, "server.xml" );
-            
+            socketserver = new SocketServer( this, serverconf );
             m_graphicsMgr = new ServerGraphicsMgr();
         }
         version( client ){
@@ -59,6 +61,7 @@ public:
         
         version( client ){
             socketclient.connect();
+            socketclient.login(clientconf.login,clientconf.password);
             socketclient.write("ahoj servere!\0");
         }
         
@@ -82,15 +85,12 @@ public:
             Thread.sleep( dur!("msecs")( 200 ) );
         }
         
-        version( server ){
-            socketserver = new SocketServer( this, serverconf );
-            while(true){
-                socketserver.handleClients();
-                
-                // dalsi logika serveru
-                
-                Thread.sleep( dur!("msecs")( 200 ) );
-            }
+        version( server ) while(true){
+            socketserver.handleClients();
+            
+            // dalsi logika serveru
+            
+            Thread.sleep( dur!("msecs")( 200 ) );
         }
         
         return 0;
