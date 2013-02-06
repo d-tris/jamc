@@ -22,9 +22,9 @@ public:
     this(IGame game, ServerConf configuration){
         this.game = game;
         this.configuration = configuration;
-        listener = new UdpSocket;
+        listener = new UdpSocket(AddressFamily.INET6);
         listener.blocking = false;
-        listener.bind(new InternetAddress(configuration.port));
+        listener.bind(new Internet6Address(configuration.port));
     }
     
     ~this(){

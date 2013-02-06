@@ -30,9 +30,18 @@ public:
     
     void connect(){
         game.logger.notice("connecting to the server...");
-        server = new UdpSocket();
+        Address[] addresses;
+        try{
+         addresses = getAddress(configuration.server,configuration.port);
+        }
+        catch(SocketOSException e){
+            game.logger.error("cannot get address of server \"" ~ configuration.server ~ "\"!");
+            throw e;
+        }
+        game.logger.notice("address of server is " ~ addresses[0].toString());
+        server = new UdpSocket(addresses[0].addressFamily);
         server.blocking = false;
-        server.connect(new InternetAddress(configuration.server,configuration.port));
+        server.connect(addresses[0]);
     }
     
     void disconnect(){
