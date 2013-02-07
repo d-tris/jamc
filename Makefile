@@ -11,6 +11,9 @@ server:
 	rdmd --build-only -version=server -ofserver $(RDMDFLAGS) $(SERVERFLAGS) $(SRCDIR)/jamc/common/game.d
 
 client:
-	rdmd --build-only -version=client -ofclient $(RDMDFLAGS) $(CLIENTFLAGS) $(SRCDIR)/jamc/common/game.d
+	mkdir -p obj/jamc/client/
+	gcc -c src/jamc/client/graphics.c -o obj/jamc/client/graphics.o
+	rdmd -c --build-only -version=client -ofobj/client.o $(RDMDFLAGS) $(CLIENTFLAGS) $(SRCDIR)/jamc/common/game.d 
+	dmd obj/client.o obj/jamc/client/graphics.o -ofclient $(RDMDFLAGS) $(CLIENTFLAGS)
 
 .PHONY: all server client

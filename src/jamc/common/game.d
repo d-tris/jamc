@@ -51,7 +51,7 @@ public:
             loadConfiguration!(ClientConf)( this, clientconf, "client.xml" );
             socketclient = new SocketClient( this, clientconf );
             
-            //m_graphicsMgr = new ClientGraphicsMgr( this ); // zpusobi Segmentation fault ( Syscall param ioctl(generic) points to uninitialised byte(s) )
+            m_graphicsMgr = new ClientGraphicsMgr( this ); // zpusobi Segmentation fault ( Syscall param ioctl(generic) points to uninitialised byte(s) )
             
         }
     }
