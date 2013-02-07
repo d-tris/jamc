@@ -6,11 +6,6 @@ import std.container;
 
 import jamc.util.gpu.buffer;
 
-interface IRenderable
-{
-    void draw();
-}
-
 class Renderer( RenderFormat )
 {
 public:
