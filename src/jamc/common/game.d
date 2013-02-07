@@ -79,9 +79,9 @@ public:
             
             //herni logika jde sem
             
-            //m_graphicsMgr.beginFrame();
+            m_graphicsMgr.beginFrame();
             // kresleni sceny jde sem
-            //m_graphicsMgr.finishFrame();
+            m_graphicsMgr.finishFrame();
             
             Thread.sleep( dur!("msecs")( 200 ) );
         }
