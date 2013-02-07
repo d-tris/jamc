@@ -2,6 +2,7 @@ module jamc.api.game;
 
 import jamc.api.events;
 import jamc.api.graphics;
+import jamc.api.gui;
 import jamc.api.logger;
 
 
@@ -16,4 +17,5 @@ interface IGame
     @property IEventDispatcher events();
     @property IGraphicsMgr gfx();
     @property ILogger logger();
+    @property IGui gui();
 }

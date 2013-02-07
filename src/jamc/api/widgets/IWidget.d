@@ -1,4 +1,4 @@
-module jamc.api.IWidget;
+module jamc.api.widgets.IWidget;
 
 import core.time;
 import CSFML.Window.Mouse;
@@ -12,14 +12,14 @@ interface IWidget
 
     
     /// Nastaví pozici elementu vzhledem k rodiči
-    @property void position( vec2i newPosition );
+    @property void position( vec2i position );
     
     /// Získá pozici elementu vzhledem k rodiči
     @property vec2i position() const;
     
     
     /// Nastaví velikost elementu
-    @property void size( vec2i newSize );
+    @property void size( vec2i size );
     
     /// Vrátí velikost elementu
     @property vec2i size() const;
@@ -30,7 +30,7 @@ interface IWidget
 
     
     /// Nastaví viditelnost elementu
-    @property void visible( bool vis );
+    @property void visible( bool visible );
     
     /// Vrátí viditelnost elementu
     @property bool visible() const;
@@ -55,11 +55,11 @@ interface IWidget
     
     /// Vrátí rodiče elementu. Může vrátit null pro elementy na nejvyšší 
     /// úrovni.
-    IWidget getParent() const;
+    @property IWidget parent();
 
     
     /// Přidá subelement \a newChild do tohoto elementu
-    void    addChild( IWidget newChild );
+    void    addChild( IWidget child );
     
     /// Odebere subelement \a child z tohoto elementu
     void    removeChild( IWidget child );
@@ -70,18 +70,22 @@ interface IWidget
     /// Přenese subelement child do popředí
     void    giveFocusTo( IWidget child );
 
-    /// Reaguje na počátek tažení elementu při stisknutí tlačítka \a mb
-    void    beginDrag( sfMouseButton mb );
-    
-    /// Reaguje na konec tažení elementu při uvolnění tlačítka \a b
-    void    endDrag( sfMouseButton mb );
 
+    /**
+     * Reaguje na tažení elementu. Element si musí zažádat o tažení
+     * pomocí manažeru GUI a metody beginDrag. Tažení lze ukončit opět 
+     * pomocí manažeru GUI a metody endDrag.
+     * \param delta O kolik se posunula myš
+     * \param mb které tlačítko je stisknuto
+     */
+    void    handleDrag( vec2i delta, sfMouseButton mb );
 
     /** 
      * Propaguje a reaguje na stisk nebo uvolnění tlačítka.
      * \param position Pozice myši při kliknutí, relativní k elementu
      * \param mb       Stisknuté/uvolněné tlačítko
      * \param up       Pokud true, tak bylo tlačítko uvolněno, jinak bylo stisknuto
+     * \return Zda se má událost kliku propagovat do rodičovského elementu
      */
     bool    handleMouseClick( vec2i position, sfMouseButton mb, bool up );
     
@@ -99,6 +103,10 @@ interface IWidget
      */
     void    handleWheel( vec2i position, int amount );
     
+    /**
+     * Zjišťuje, zda je myš nas tímto elementem
+     */
+    @property bool mouseOver();
     
     /**
      * Reaguje na text napsaný na klávesnici. Element si musí vyžádat 
@@ -112,9 +120,9 @@ interface IWidget
      * Vrací true pokud tento objekt nějakým způsobem reaguje na vstup
      * z klávesnice.
      */
-    bool    getAllowKeyboardInput() const;
+    @property bool allowKeyboardInput() const;
     
     
     /// Vrací herní kontext
-    IGame   getGame() const;
+    @property IGame game();
 };

@@ -36,7 +36,7 @@ mixin template VectorBase( T, size_t dim )
     }
     
     /// Operace vektoroveho souctu a rozdilu
-    const typeof(this) opBinary( string op )( typeof(this) rhs )
+    const typeof(this) opBinary( string op )( typeof(this) rhs ) const
     if( op == "+" || op == "-" )
     {
         T[dim] ret = data;
@@ -46,7 +46,7 @@ mixin template VectorBase( T, size_t dim )
     }
     
     /// Operace nasobeni a deleni vektoru skalarem
-    const typeof(this) opBinary( string op )( T rhs )
+    const typeof(this) opBinary( string op )( T rhs ) const
     if( op == "*" || op == "/" )
     {
         T[dim] ret = data;
@@ -55,7 +55,7 @@ mixin template VectorBase( T, size_t dim )
     }
     
     /// Operace nasobeni skalarem 
-    const typeof(this) opBinaryRight( string op )( T lhs )
+    const typeof(this) opBinaryRight( string op )( T lhs ) const
     if( op == "*" )
     {
         T[dim] ret = data;
@@ -91,7 +91,7 @@ mixin template VectorBase( T, size_t dim )
         return this;
     }
     
-    T opIndex( size_t i )
+    T opIndex( size_t i ) const
     {
         return data[ i ];
     }

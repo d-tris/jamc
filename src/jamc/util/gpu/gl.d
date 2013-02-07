@@ -114,4 +114,9 @@ void popBuffer( GLenum target )
     glBindBuffer( target, m_bufferStack[ target ].back() );
 }
 
+void* glToOffset( T )( T x )
+{
+    return cast(void*) x;
+}
+
 static GLuint[][GLenum] m_bufferStack;

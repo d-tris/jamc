@@ -110,6 +110,11 @@ public:
     {
         return loggerObject;
     }
+    
+    override @property IGui gui()
+    {
+        assert( 0, "GUI ještě není" );
+    }
 }
 
 int main()
