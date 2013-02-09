@@ -2,7 +2,7 @@
 
 SRCDIR=src
 RDMDFLAGS=-g -I$(SRCDIR)
-CLIENTFLAGS=-L-lcsfml-graphics -L-lcsfml-window -L-lGL -version=OpenGL
+CLIENTFLAGS=-L-lcsfml-graphics -L-lcsfml-window -L-lsfml-graphics -L-lsfml-window -L-lGL -version=OpenGL
 SERVERFLAGS=
 
 all: server client
@@ -16,4 +16,8 @@ client:
 	rdmd -c --build-only -version=client -ofobj/client.o $(RDMDFLAGS) $(CLIENTFLAGS) $(SRCDIR)/jamc/common/game.d 
 	dmd obj/client.o obj/jamc/client/graphics.o -ofclient $(RDMDFLAGS) $(CLIENTFLAGS)
 
-.PHONY: all server client
+.PHONY: all clean server client
+
+clean:
+	rm -rf obj client server client.log server.log
+

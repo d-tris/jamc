@@ -1,4 +1,5 @@
 /src/CSFML/
+/obj
 /server.log
 /client.log
 /server
