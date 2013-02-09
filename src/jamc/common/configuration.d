@@ -2,44 +2,100 @@ module jamc.common.configuration;
 import jamc.api.game;
 import jamc.api.configuration;
 
+import std.array;
 import std.xml;
-import std.variant;
 import std.file;
-import std.stdio;
 import std.conv;
 import std.traits;
+import std.typetuple;
 import jamc.common.logger;
 import jamc.common.game;
 
-void loadConfiguration( T )( IGame game, out T data, string filename ){
+struct Required{}
+
+void loadConfiguration( T )( IGame game, ref T data, string filename )
+if( is( T == struct ) )
+{
     try{
+        scope(success) game.logger.notice( "configuration loaded" );
+        
         string file = cast(string) read( filename );
         check(file);
-        auto xml = new DocumentParser( file );
+        auto xml = new Document( file );
         
-        void onEnd( string target )( in Element e )
+        bool[] loaded;
+        loaded.length = __traits( allMembers, T ).length;
+        
+        foreach( e; xml.elements )
         {
-            try{
-                __traits( getMember, data, target ) = to!( typeof( __traits( getMember, data, target ) ) )( e.text() );
-            }
-            catch(ConvException e){
-                game.logger.error( "bad data type of " ~ target ~ " in configuration file: " ~ filename );
+            foreach( i, member; __traits( allMembers, T ) )
+            {
+                if( e.tag.name == member )
+                {
+                    if( loaded[i] )
+                    {
+                        game.logger.warning( 
+                            "Duplicate value of '" 
+                            ~ member ~ "' in configuration file '" 
+                            ~ filename ~ "'" 
+                        );
+                    }
+                    else
+                    {
+                        try
+                        {
+                            __traits( getMember, data, member ) = 
+                                to!( typeof( __traits( getMember, data, member ) ) )( e.text() );
+                            loaded[i] = true;
+                        }
+                        catch( ConvException )
+                        {
+                            game.logger.warning( 
+                                "Incorrect type of value '"
+                                ~ member ~ "' in configuration file '"
+                                ~ filename ~ "'. Falling back to default value of '"
+                                ~ to!string( __traits( getMember, data, member ) )
+                                ~ "'." 
+                            );
+                        }
+                    }
+                }
             }
         }
         
-        foreach( member; __traits(allMembers, T) )
+        string[] notLoaded;
+        
+        foreach( i, member; __traits( allMembers, T ) )
         {
-            xml.onEndTag[ member ] = &( onEnd!( member ) );
+            if( 
+                staticIndexOf!( 
+                    Required,
+                    __traits( 
+                        getAttributes, 
+                        __traits( getMember, data, member ) 
+                    )
+                ) != -1 && !loaded[i] 
+            )
+            {
+                notLoaded ~= "  - '" ~ member ~ "' of type '" 
+                             ~ typeof( __traits( getMember, data, member ) ).stringof
+                             ~ "'";
+            }
         }
-
-        xml.parse();
+        
+        if( !notLoaded.empty )
+        {
+            throw new Exception( 
+                "The following required values could not be loaded from the configuration file '"
+                ~ filename ~ "'.\n" ~ join( notLoaded, "\n" )
+            );
+        }        
     }
     catch(FileException e){
-        game.logger.error( "can't open configuration file: " ~ filename );
+        game.logger.error( "Can't open configuration file: " ~ filename );
     }
     catch(CheckException e){
-        game.logger.error( "bad validation result of configuration file: " ~ filename );
+        game.logger.error( "Configuration file '" ~ filename ~ "' is not a valid XML document ");
     }
-    game.logger.notice( "configuration loaded" );
 }
 

@@ -1,7 +1,9 @@
 module jamc.api.configuration;
 
+import jamc.common.configuration;
+
 struct ServerConf {
-    string servername;
+    @Required string servername;
     ushort port;
     uint maxconnections;
 }
@@ -9,7 +11,7 @@ struct ServerConf {
 struct ClientConf {
     string server;
     ushort port;
-    string login;
-    string password;
+    @Required string login;
+    @Required string password;
 }
 
