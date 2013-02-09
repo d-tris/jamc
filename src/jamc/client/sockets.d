@@ -66,10 +66,20 @@ public:
         char buffer[] = new char[32];
         auto loaded = server.receive(buffer);
         if( loaded != Socket.ERROR && loaded > 0 ){ // pokud server neco zaslal
+
+            game.logger.notice("readed from the server: " ~ to!string(buffer));
+            
+            if(buffer[0]==0xFF && loaded>=5){ // prisla vyzva k prihlaseni (obsahujici sul)
+
+                string salt = to!string(buffer[ 1 .. 5 ]);
+                game.logger.notice("server require login with salt " ~ salt);
+                string passwordhash = cast(string) digest!SHA1(username ~ password ~ salt);
+                
+                this.write( to!string(cast(char)0xFF) ~ to!string(cast(char)(username.length)) ~ username ~ to!string(cast(char)(passwordhash.length)) ~ passwordhash );
+                
+            }
             
             // TODO: zde by se pak melo rozparsovat co dorazilo a zavolat patricne funkce
-            game.logger.notice("readed from the server: " ~ to!string(buffer));
-            writeln("Prijato " ~ to!string(loaded) ~ " bytu: " ~ to!string(buffer));
             
         }
     }
@@ -81,7 +91,6 @@ public:
     }
     
     void login(){
-        string passwordhash = cast(string) digest!SHA1(username ~ password);
-        this.write( to!string(cast(char)0xFF) ~ to!string(cast(char)(username.length)) ~ username ~ to!string(cast(char)(passwordhash.length)) ~ passwordhash );
+        this.write(to!string(cast(char)0x00)); // prazdna instrukce pouze vyvola vyzvu k prihlaseni
     }
 }
