@@ -50,9 +50,7 @@ public:
             loggerObject = new Logger( this, Logger.level.notice, true, "client.log" );
             loadConfiguration!(ClientConf)( this, clientconf, "client.xml" );
             socketclient = new SocketClient( this, clientconf );
-            
-            m_graphicsMgr = new ClientGraphicsMgr( this ); // zpusobi Segmentation fault ( Syscall param ioctl(generic) points to uninitialised byte(s) )
-            
+            m_graphicsMgr = new ClientGraphicsMgr( this );
         }
     }
     override int run()

@@ -8,6 +8,13 @@ import std.socket;
 import std.digest.sha;
 import std.conv;
 import core.thread;
+import std.datetime;
+import std.random;
+
+struct Salt {
+    string salt;
+    //SysTime generated; // TODO
+}
 
 class SocketServer
 {
@@ -15,7 +22,8 @@ private:
     IGame game;
     ServerConf configuration;
     Socket listener;
-    string[string] clients; // pole pripojenych klientu (zatim obsahuje login, pozdeji objekt hrace)    
+    string[string] clients; // pole pripojenych klientu (zatim obsahuje login tedy string, pozdeji objekt hrace)
+    Salt[string] salts; // pole soli pripojujicich se klientu
     
 public:
     
@@ -38,34 +46,45 @@ public:
         
         if( loaded != Socket.ERROR && loaded > 0 ){ // pokud nektery klient neco zaslal
             
-            game.logger.notice( "readed " ~ to!string(loaded) ~ " bytes from the client " ~ from.toAddrString() ~ ":" ~ from.toPortString() ~ ": " ~ to!string(buffer) );
+            //game.logger.notice( "readed " ~ to!string(loaded) ~ " bytes from the client " ~ from.toAddrString() ~ ":" ~ from.toPortString() ~ ": " ~ to!string(buffer) );
             
-            if(!clients.get(from.toString(),null)){ // neprihlaseny
+            if(!(from.toString() in clients)){ // neprihlaseny
                 
-                if(buffer[0]==0xFF){ // prihlasuje se
+                // prihlasuje se a zname jeho sul
+                if(buffer[0]==0xFF && from.toString() in salts){
                     
                     string potentialUsername = to!string(buffer[ 2 .. 2+buffer[1] ]);
                     string potentialPassword = to!string(buffer[ 2+buffer[1]+1 .. 2+buffer[1]+1 + buffer[2+buffer[1]] ]);
                     
-                    // prozatim jsou prihlaseni vsichni, kteri zadaji heslo "bagr"
-                    
-                    if( potentialPassword == cast(string)digest!SHA1(potentialUsername ~ "bagr") ){
+                    if( potentialPassword == cast(string)digest!SHA1( potentialUsername ~ "bagr" ~ salts[from.toString()].salt ) ){
                         // prihlasen
                         clients[from.toString()] = potentialUsername;
-                        game.logger.notice( "Prihlasen \"" ~ potentialUsername ~ "\" s heslem \"" ~ potentialPassword ~ "\"" );
+                        game.logger.notice( "logged " ~ potentialUsername );
                     }else{
                         // pristup odepren
                         listener.sendTo(to!string(cast(char)0xFE), from);
-                        game.logger.notice( "Pristup odepren pro \"" ~ potentialUsername ~ "\" s heslem \"" ~ potentialPassword ~ "\"" );
+                        game.logger.notice( "rejected " ~ potentialUsername );
                     }
                     
-                }else{ // neprihlaseny a nevi o tom
-                    listener.sendTo(to!string(cast(char)0xFF), from);
+                }else{
+                    // neprihlaseny a nevi o tom, nebo prvotni pozadavek, nebo se prihlasuje, ale my uz nemame jeho sul
+                    // posleme ze se musi prihlasit + novou sul hesla
+                    string saltString;
+                    if(from.toString() in salts){
+                        saltString = salts[from.toString()].salt;
+                        game.logger.notice( "for " ~ from.toString() ~ " is salt " ~ saltString );
+                    }else{
+                        Random gen = Random(unpredictableSeed);
+                        saltString = to!string([ uniform('0','9',gen), uniform('0','9',gen), uniform('0','9',gen), uniform('0','9',gen) ]);
+                        salts[from.toString()] = Salt(saltString);
+                        game.logger.notice( "generated salt " ~ saltString ~ " for " ~ from.toString() );
+                    }
+                    listener.sendTo( to!string(cast(char)0xFF) ~ saltString , from);
                 }
                 
             }else{ // prihlaseny
                 
-                game.logger.notice( "Ozval se klient " ~ clients[from.toString()] ~ " z " ~ from.toString() );
+                game.logger.notice( clients[from.toString()] ~ " (" ~ from.toString() ~ "): " ~ to!string(buffer) );
                 
                 // test odpovedi klientovi
                 listener.sendTo("ahoj kliente!\0", from);
