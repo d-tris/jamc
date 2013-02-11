@@ -2,6 +2,8 @@ module jamc.client.sockets;
 import jamc.api.logger;
 import jamc.api.game;
 import jamc.api.configuration;
+import jamc.api.packets;
+import jamc.api.network;
 
 import std.stdio;
 import std.socket;
@@ -29,7 +31,7 @@ public:
         game.logger.notice("connecting to the server...");
         Address[] addresses;
         try{
-         addresses = getAddress(configuration.server,configuration.port);
+            addresses = getAddress(configuration.server,configuration.port);
         }
         catch(SocketOSException e){
             game.logger.error("cannot get address of server \"" ~ configuration.server ~ "\"!");
@@ -60,20 +62,23 @@ public:
     }
     
     void handleServer(){
-        char buffer[] = new char[32];
+        
+        ubyte buffer[] = new ubyte[32];
+        
         auto loaded = server.receive(buffer);
         if( loaded != Socket.ERROR && loaded > 0 ){ // pokud server neco zaslal
 
             game.logger.notice("readed from the server: " ~ to!string(buffer));
             
-            if(buffer[0]==0xFF && loaded>=5){ // prisla vyzva k prihlaseni (obsahujici sul)
+            if(buffer[0]==packetType.loginSaltReply && loaded>=5){ // prisla vyzva k prihlaseni (obsahujici sul)
 
-                string salt = to!string(buffer[ 1 .. 5 ]);
+                string salt = to!string(cast(char[])buffer[ 1 .. 5 ]);
                 game.logger.notice("server require login with salt " ~ salt);
-                string passwordhash = cast(string) digest!SHA1(username ~ password ~ salt);
                 
-                this.write( to!string(cast(char)0xFF) ~ to!string(cast(char)(username.length)) ~ username ~ to!string(cast(char)(passwordhash.length)) ~ passwordhash );
+                this.write( packetEncode( packetType.loginRequest, LoginRequest( username, digest!SHA1( username ~ password ~ salt ) ) ) );
                 
+            }else{
+                game.logger.notice("server send unknown packet");
             }
             
             // TODO: zde by se pak melo rozparsovat co dorazilo a zavolat patricne funkce
@@ -88,6 +93,6 @@ public:
     }
     
     void login(){
-        this.write(to!string(cast(char)0x00)); // prazdna instrukce pouze vyvola vyzvu k prihlaseni
+        this.write(packetEncode(packetType.loginRequest));
     }
 }
