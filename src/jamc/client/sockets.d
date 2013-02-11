@@ -24,9 +24,6 @@ public:
         this.game = game;
         this.configuration = configuration;
     }
-    ~this(){
-        disconnect();
-    }
     
     void connect(){
         game.logger.notice("connecting to the server...");
