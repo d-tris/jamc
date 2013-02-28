@@ -7,6 +7,7 @@ import std.traits;
 import std.typecons;
 
 public import GL.gl;
+public import jamc.util.gpu.glConstants;
 
 /// Nahraje všechny OGL rozšíření, co tu jsou.
 /// \return Počet nahraných funkcí
@@ -25,6 +26,10 @@ int loadGLFunctions()
             }
         }
     }
+    
+    glPushBuffer( GL_ARRAY_BUFFER, 0 );
+    glPushBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+    
     return n;
 }
     
@@ -39,7 +44,7 @@ void loadSingleGLFunction( T )( out T target, string[] names... )
         }
     }
     
-    target = enforce( target );
+    enforce( target, "Could not load OpenGL function '" ~ names[0] ~ "'" );
 }
 
 struct LoadGL( inNames... )
@@ -47,6 +52,10 @@ struct LoadGL( inNames... )
     alias names = inNames;
 }
 
+template GLF(F)
+{
+    alias GLF = SetFunctionAttributes!( F, "C", functionAttributes!F );
+}
 
 alias GLintptr = size_t;
 alias GLsizeiptr = size_t;
@@ -64,54 +73,61 @@ else
     alias glGetProcAddress = glXGetProcAddress;
 }
 
+/*
+@LoadGL!( "glEnableClientState" )
+void function( GLenum cap ) glEnableClientState;
+
+@LoadGL!( "glDisableClientState" )
+void function( GLenum cap ) glDisableClientState;*/
+
 @LoadGL!( "glBindBuffer", "glBindBufferARB" ) 
-void function(GLenum target, GLuint buffer) glBindBuffer;
+GLF!(void function(GLenum target, GLuint buffer)) glBindBuffer;
 
 @LoadGL!( "glDeleteBuffers", "glDeleteBuffersARB" ) 
-void function(GLsizei n, const GLuint* buffers) glDeleteBuffers;
+GLF!(void function(GLsizei n, const GLuint* buffers)) glDeleteBuffers;
 
 @LoadGL!( "glGenBuffers", "glGenBuffersARB" ) 
-void function(GLsizei n, GLuint* buffers) glGenBuffers;
+GLF!(void function(GLsizei n, GLuint* buffers)) glGenBuffers;
 
 @LoadGL!( "glIsBuffer", "glIsBufferARB" ) 
-GLboolean function(GLuint buffer) glIsBuffer;
+GLF!(GLboolean function(GLuint buffer)) glIsBuffer;
 
 @LoadGL!( "glBufferData", "glBufferDataARB" ) 
-void function(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage) glBufferData;
+GLF!(void function(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage)) glBufferData;
 
 @LoadGL!( "glBufferSubData", "glBufferSubDataARB" )
-void function(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid* data) glBufferSubData;
+GLF!(void function(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid* data)) glBufferSubData;
 
 @LoadGL!( "glGetBufferSubData", "glGetBufferSubDataARB" )
-void function(GLenum target, GLintptr offset, GLsizeiptr size, GLvoid* data) glGetBufferSubData;
+GLF!(void function(GLenum target, GLintptr offset, GLsizeiptr size, GLvoid* data)) glGetBufferSubData;
 
 @LoadGL!( "glMapBuffer", "glMapBufferARB" )
-GLvoid* function(GLenum target, GLenum access) glMapBuffer;
+GLF!(GLvoid* function(GLenum target, GLenum access)) glMapBufferFP;
 
 @LoadGL!( "glUnmapBuffer", "glUnmapBufferARB" )
-GLboolean function(GLenum target) glUnmapBuffer;
+GLF!(GLboolean function(GLenum target)) glUnmapBuffer;
 
 @LoadGL!( "glGetBufferParameteriv", "glGetBufferParameterivARB" )
-void function(GLenum target, GLenum pname, GLint* params) glGetBufferParameteriv;
+GLF!(void function(GLenum target, GLenum pname, GLint* params)) glGetBufferParameteriv;
 
 @LoadGL!( "glGetBufferPointerv", "glGetBufferPointervARB" )
-void function(GLenum target, GLenum pname, GLvoid** params) glGetBufferPointerv;
+GLF!(void function(GLenum target, GLenum pname, GLvoid** params)) glGetBufferPointerv;
 
 @LoadGL!( "glDrawRangeElements", "glDrawRangeElementsARB" )
-void function(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices) glDrawRangeElements;
+GLF!(void function(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices)) glDrawRangeElements;
 
 // Naše vlastní "rozšíření"
 
-void pushBuffer( GLenum target, GLuint buffer )
+void glPushBuffer( GLenum target, GLuint buffer )
 {
     glBindBuffer( target, buffer );
     m_bufferStack[ target ] ~= buffer;
 }
 
-void popBuffer( GLenum target )
+void glPopBuffer( GLenum target )
 {
     m_bufferStack[ target ].length--;
-    glBindBuffer( target, m_bufferStack[ target ].back() );
+    glBindBuffer( target, m_bufferStack[ target ].back );
 }
 
 void* glToOffset( T )( T x )
@@ -119,4 +135,4 @@ void* glToOffset( T )( T x )
     return cast(void*) x;
 }
 
-static GLuint[][GLenum] m_bufferStack;
+private static GLuint[][GLenum] m_bufferStack;

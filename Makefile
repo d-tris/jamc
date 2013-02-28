@@ -3,7 +3,7 @@
 SRCDIR=src
 OBJDIR=obj
 RDMDFLAGS=-g -I$(SRCDIR)
-CLIENTFLAGS=-L-lcsfml-graphics -L-lcsfml-window -L-lsfml-graphics -L-lsfml-window -L-lGL -version=OpenGL
+CLIENTFLAGS=-L-lcsfml-graphics -L-lcsfml-window -L-lsfml-graphics -L-lsfml-window -L-lGL -L-lGLU -version=OpenGL
 SERVERFLAGS=
 
 all: server client
@@ -22,8 +22,15 @@ $(OBJDIR)/client.o:
 client: $(OBJDIR)/jamc/client/graphics.o $(OBJDIR)/client.o
 	dmd obj/client.o obj/jamc/client/graphics.o -ofclient $(RDMDFLAGS) $(CLIENTFLAGS)
 
-.PHONY: all clean server $(OBJDIR)/client.o
+trace:
+	apitrace trace -o client.trace ./client
+	apitrace dump client.trace
+
+.PHONY: all clean server trace $(OBJDIR)/client.o
 
 clean:
 	rm -rf obj client server client.log server.log
+
+
+
 

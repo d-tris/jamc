@@ -12,6 +12,7 @@ import jamc.util.vector;
 import std.algorithm;
 import std.container;
 import std.datetime;
+import std.stdio;
 
 import CSFML.Window.Mouse;
 
@@ -30,8 +31,13 @@ interface IRenderProxy
 
     void setAlpha( double alpha );
 
-    //@property IGpuAllocator!( GuiRenderFormat.vertex_format ) vertexAllocator();
-    //@property IGpuAllocator!( GuiRenderFormat.index_format ) indexAllocator();
+    void enterElement( int depth );
+    void prepareStencilAddition( int depth );
+    void prepareStencilSubtraction( int depth );
+
+    void translate( int x, int y );
+    void pushTransform();
+    void popTransform();
 
     void draw();
 }
@@ -70,7 +76,7 @@ public:
     this( IGame game, vec2i pos, vec2i size )
     {
         m_game = game;
-        m_position = position;
+        m_position = pos;
         m_size = size;
         
         m_opacity = 1.;
@@ -86,7 +92,8 @@ public:
         
         m_renderer = m_game.gui.getNewRenderProxy( this );
         m_stencilRenderable = new StencilRenderable( this );
-        m_stencilRenderer = m_game.gui.getNewRenderProxy( m_stencilRenderable );
+        m_stencilRenderable.proxy = m_stencilRenderer = m_game.gui.getNewRenderProxy( m_stencilRenderable );
+        
     }
     
     this( IWidget parent, vec2i pos, vec2i size)
@@ -99,17 +106,38 @@ public:
     override void draw()
     {
         // BaseWidget se nijak nevykresluje
+        m_renderer.redraw();
+        m_renderer.drawHorizontalGradient( 0, 0, size[0], size[1], rgba( 1.0f, 0.0f, 0.0f, 1.0f ), rgba( 0.0f, 1.0f, 0.0f, 0.0f ) ); 
     }
     
     override void doDraw( int depth )
     {
-        // TODO
+        m_renderer.enterElement( depth );
+        drawImpl();
+
+        m_renderer.prepareStencilAddition( depth );
+        m_stencilRenderer.draw();
+
+        foreach( child; m_children )
+        {
+            if( child.visible ){
+                m_renderer.pushTransform();
+                m_renderer.translate( child.position[0], child.position[1] );
+                writeln( "Posunuju dítě na ", child.position );
+                child.doDraw( depth + 1 );
+                m_renderer.popTransform();
+            }
+        }
+
+        m_renderer.prepareStencilSubtraction( depth );
+        m_stencilRenderer.draw();
     }
     
     override @property void position( vec2i position )
     {
         if( m_position != position )
         {
+            m_stencilRenderer.redraw();
             PositionChangedEvent evt = new PositionChangedEvent( m_position, position );
             m_position = position;
             game.events.raise( evt );
@@ -323,6 +351,12 @@ public:
     }
 
 protected:
+
+    void drawImpl()
+    {
+        m_renderer.draw();
+    }
+
     IRenderProxy m_renderer;
     IRenderProxy m_stencilRenderer;
 

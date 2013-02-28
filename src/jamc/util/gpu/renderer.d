@@ -4,7 +4,10 @@ import std.algorithm;
 import std.array;
 import std.container;
 
-import jamc.util.gpu.buffer;
+import std.stdio;
+
+import jamc.api.renderer;
+import jamc.util.gpu.ibuffer;
 
 class Renderer( RenderFormat )
 {
@@ -51,9 +54,15 @@ public:
             m_valid = true;
             m_empty = empty();
             m_vertexCount = cast(index_type) m_vertices.length;
-            m_parts.back.indexCount = cast(index_type)( m_indices.length - m_indexCount );
+            
+            auto lastPart = m_parts.back;
+            lastPart.indexCount = cast(index_type)( m_indices.length - m_indexCount );
+            m_parts[$-1] = lastPart;
+            writeln( "Počet indexů: ", m_indices.length - m_indexCount, " a ", m_parts[$-1].indexCount );
             m_vertices.clear();
             m_indices.clear();
+            
+            writeln( "Renderer parts: ",  m_parts[] );
         }
 
         if( !m_empty )

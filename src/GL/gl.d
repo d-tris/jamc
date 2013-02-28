@@ -17,14 +17,8 @@
 
 module GL.gl;
 
-version (Win32) {
-    extern (Windows):
-}
-version (linux) {
-    extern (C):
-}
-
-
+extern( System )
+{
 
 /************************************************************************
  *
@@ -4538,3 +4532,5 @@ alias PFNGLFLUSHPIXELDATARANGENVPROC = void function(GLenum target);
 /* GL_NV_point_sprite */
 alias PFNGLPOINTPARAMETERINVPROC = void function(GLenum pname, GLint param);
 alias PFNGLPOINTPARAMETERIVNVPROC = void function(GLenum pname, GLint *params);
+
+} // extern(System)

@@ -12,15 +12,22 @@ import jamc.api.graphics;
 import jamc.api.gui;
 import jamc.api.logger;
 import jamc.api.configuration;
+import jamc.api.widgets.BaseWidget;
 
 import jamc.common.events;
 import jamc.common.logger;
 import jamc.common.configuration;
+
 version( server ) import jamc.server.sockets;
 version( client ) import jamc.client.sockets;
 
 version( server ) import jamc.server.graphics;
 version( client ) import jamc.client.graphics;
+
+version( server ) import jamc.server.gui;
+version( client ) import jamc.client.gui;
+
+import jamc.util.vector;
 
 class JamcGame : IGame
 {
@@ -28,6 +35,7 @@ private:
     IEventDispatcher m_eventDispatch;
     IGraphicsMgr m_graphicsMgr;
     ILogger loggerObject;
+    IGui m_gui;
     
     version(server) ServerConf serverconf;
     version(client) ClientConf clientconf;
@@ -45,12 +53,17 @@ public:
             loadConfiguration!(ServerConf)( this, serverconf, "server.xml" );
             socketserver = new SocketServer( this, serverconf );
             m_graphicsMgr = new ServerGraphicsMgr();
+            m_gui = new ServerGui();
         }
         version( client ){
             loggerObject = new Logger( this, Logger.level.notice, true, "client.log" );
             loadConfiguration!(ClientConf)( this, clientconf, "client.xml" );
             socketclient = new SocketClient( this, clientconf );
             m_graphicsMgr = new ClientGraphicsMgr( this );
+            m_gui = new ClientGui( this );
+            
+            m_gui.mainPanel = new BaseWidget( this, vec2i( 0, 0 ), m_graphicsMgr.screenSize );
+            new BaseWidget( m_gui.mainPanel, vec2i(100,100), m_graphicsMgr.screenSize - vec2i(200,200) );
         }
     }
     override int run()
@@ -79,6 +92,7 @@ public:
             
             m_graphicsMgr.beginFrame();
             // kresleni sceny jde sem
+            m_gui.draw();
             m_graphicsMgr.finishFrame();
             
             Thread.sleep( dur!("msecs")( 200 ) );
@@ -112,7 +126,7 @@ public:
     
     override @property IGui gui()
     {
-        assert( 0, "GUI ještě není" );
+        return m_gui;
     }
 }
 

@@ -15,12 +15,7 @@ module GL.glu;
 import GL.gl;
 
 
-version (Win32) {
-    extern (Windows):
-}
-version (linux) {
-    extern (C):
-}
+extern (System):
 
 
 /************************************************************************

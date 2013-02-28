@@ -2,6 +2,13 @@ module jamc.util.gpu.buffer;
 
 import std.algorithm;
 import std.container;
+import std.conv;
+import std.exception;
+
+import std.stdio;
+
+import jamc.util.gpu.gl;
+public import jamc.util.gpu.ibuffer;
 
 class BufferObjectManager( BufferFormat )
 {
@@ -22,12 +29,18 @@ class BufferObjectManager( BufferFormat )
 
     void allocate( size_type size )
     {
+        GLuint[8] buffery;
+        glGenBuffers( 8, buffery.ptr );
+        
+        writeln( buffery );
+        
         clear();
         glGenBuffers( 1, &m_buffer );
+        enforce( m_buffer, "Nedostali jsme OGL buffer" );
         glPushBuffer( m_target, m_buffer );
         glBufferData( m_target, size * value_type.sizeof, null, m_usage );
         glPopBuffer( m_target );
-        m_capacity = m_size;
+        m_capacity = size;
     }
     
     void resize( size_type newSize )
@@ -35,7 +48,7 @@ class BufferObjectManager( BufferFormat )
         GLuint oldBuffer = m_buffer;
         glPushBuffer( m_target, oldBuffer );
 
-        auto oldData = glMapBuffer( m_target, GL_READ_ONLY );
+        auto oldData = glMapBufferFP( m_target, GL_READ_ONLY );
 
         glGenBuffers( 1, &m_buffer );
         glPushBuffer( m_target, m_buffer );
@@ -46,20 +59,21 @@ class BufferObjectManager( BufferFormat )
         glPopBuffer( m_target );
         glPopBuffer( m_target );
 
-        deleteBuffers( 1, &oldBuffer );
+        glDeleteBuffers( 1, &oldBuffer );
     }
     
     void upload( value_type[] data, size_type start )
     {
         glPushBuffer( m_target, m_buffer );
-        glBufferSubData( m_target, start * value_type.sizeof, data.size() * value_type.sizeof, data.ptr );
+        writeln( "Uploaduji: ", data );
+        glBufferSubData( m_target, start * value_type.sizeof, data.length * value_type.sizeof, data.ptr );
         glPopBuffer( m_target );
     }
     
     void clear()
     {
         if( m_buffer != 0 )
-            deleteBuffers( 1, &m_buffer );
+            glDeleteBuffers( 1, &m_buffer );
     }
     
     @property size_type capacity()
@@ -84,16 +98,6 @@ private:
     GLenum m_usage;
 }
 
-interface IGpuAllocator( BufferFormat )
-{
-    alias value_type = BufferFormat.value_type;
-    alias size_type = BufferFormat.size_type;
-    alias format = BufferFormat;
-    
-    size_type upload( value_type[] data, size_type block );
-    enum nullBlock = ~cast(size_type)0;
-}
-
 class GpuAllocator( BufferManager ) : IGpuAllocator!( BufferManager.format )
 {
     this( BufferManager manager, size_type initialCapacity )
@@ -116,39 +120,39 @@ class GpuAllocator( BufferManager ) : IGpuAllocator!( BufferManager.format )
         if( blockStart != nullBlock )
         {
             auto blockRng = m_usedBlocks.equalRange( Block( blockStart, 0 ) );
-            if( blockRng.empty() ) throw new Exception( "GpuAllocator: Block address " ~ to!string( block ) ~ " not in use" );
+            if( blockRng.empty() ) throw new Exception( "GpuAllocator: Block address " ~ to!string( blockStart ) ~ " not in use" );
 
             if( data.length > blockRng.front.length )
             {
                 // starý blok je příliš malý, takže ho uvolníme a později získáme nový
                 markAsFree( blockRng );
-                block = nullBlock;
+                blockStart = nullBlock;
             }
             else if( data.length <= blockRng.front.length/2 ) 
             {
                 // zmenšíme jenom, když to stojí za to
-                shrink( blockRng, data.length );
+                shrink( blockRng, cast(size_type) data.length );
             }
         }
 
         // potřebujeme alokovat nový blok?
-        if( block == nullBlock )
+        if( blockStart == nullBlock )
         {
-            auto newBlock = findFreeBlock( data.length );
+            auto newBlock = findFreeBlock( cast(size_type) data.length );
             if( newBlock.empty )
             {
                 // potřebujeme změnit velikost celého bufferu
-                resize( m_manager.getCapacity() * 2 );
-                newBlock = findFreeBlock( data.length );
-                assert( !newBlock.empty );
+                resize( cast(size_type)( m_manager.capacity * 2 ) );
+                newBlock = findFreeBlock( cast(size_type) data.length );
+                assert( !newBlock.empty, "GpuAllocator: Nebyl nalezen volný blok" );
             }
-            block = newBlock.start;
-            markAsUsed( newBlock, data.length );
+            blockStart = newBlock.front.start;
+            markAsUsed( newBlock, cast(size_type) data.length );
         }
 
         // a konečně nahrajeme data
-        m_manager.upload( data, block );
-        return block;
+        m_manager.upload( data, blockStart );
+        return blockStart;
     }
 
     struct Block
@@ -157,7 +161,7 @@ class GpuAllocator( BufferManager ) : IGpuAllocator!( BufferManager.format )
         size_type length;
         @property size_type end()
         {
-            return start + length;
+            return cast(size_type)( start + length );
         }
     }
 
@@ -193,26 +197,29 @@ private:
             block.front.length = newSize;
             auto freeBlock = spaceAfter.front;
             freeBlock.start -= diff;
-            freeBlock.legth += diff;
+            freeBlock.length += diff;
             m_freeBlocks.remove( spaceAfter );
             m_freeBlocks.insert( freeBlock );
         }
         else
         {
             block.front.length = newSize;
-            m_freeBlocks.insert( Block( block.front.end, diff ) );
+            m_freeBlocks.insert( Block( block.front.end, cast(size_type) diff ) );
         }
     }
     
     BlockMap.Range findFreeBlock( size_type length )
     {
+        writeln( "Hledám blok délky ", length, "B..." );
         for( auto r = m_freeBlocks[]; !r.empty; r.popBack() )
         {
-            if( r.back.length <= length )
+            writeln( "Zkouším prázdný blok ", r.back );
+            if( r.back.length >= length )
             {
-                return m_freeBlocks.equalRange( r.back.start );
+                return m_freeBlocks.equalRange( r.back );
             }
         }
+        return m_freeBlocks.Range();
     }
 
 
@@ -232,7 +239,7 @@ private:
         if( !spaceBefore.empty && !spaceAfter.empty )
         {
             // zvětšíme předchozí prázdný blok
-            spaceBefore.first.length += block.front.length + spaceAfter.length;
+            spaceBefore.front.length += block.front.length + spaceAfter.front.length;
             
             // smažeme následující prázdný blok
             m_freeBlocks.remove( spaceAfter );
@@ -285,7 +292,7 @@ private:
         {
             // před koncem bufferu je použitý blok, takže za něj vložíme
             // nový, prázdný
-            m_freeBlocks.insert( Block( m_manager.capacity, newCapacity - m_manager.capacity ) );
+            m_freeBlocks.insert( Block( m_manager.capacity, cast(size_type)( newCapacity - m_manager.capacity ) ) );
         }
         else
         {
