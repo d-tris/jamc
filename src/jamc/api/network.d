@@ -44,7 +44,23 @@ body
     
     dataEncode( app, data );
     return app.data();
-}    
+}
+
+ubyte[] packetEncode()( uint id ){
+    Appender!( ubyte[] ) app;
+    
+    if( id < 0x80 )
+    {
+        dataEncode( app, cast( ubyte )( id ) );
+    }
+    else
+    {
+        dataEncode( app, cast( ubyte )( ( id | 0x80 ) & 0xFF ) );
+        dataEncode( app, cast( ubyte )( ( id >>> 7 ) & 0xFF ) );
+    }
+    
+    return app.data();
+}
    
 /**
  * Dekóduje pole bajtů zakódované pomocí packetEncode
@@ -58,7 +74,7 @@ body
  * \param data Vrací data
  * \param packet Vstupní zakódované pole bajtů
  */
-void packetDecode( T )( out uint id, out T data, ubyte[] packet )
+void packetDecodeId( out uint id, ubyte[] packet )
 {
     //writefln( "Dekóduji %s z %sB", typeid( T ), packet.length );
     
@@ -67,6 +83,19 @@ void packetDecode( T )( out uint id, out T data, ubyte[] packet )
     if( packet[0] & 0x80 )
     {
         id |= packet[1] << 7;
+    }
+}
+
+uint packetDecodeId( ubyte[] packet ){
+    uint id;
+    packetDecodeId( id, packet );
+    return id;
+}
+
+void packetDecodeData( T )( out T data, ubyte[] packet )
+{
+    if( packet[0] & 0x80 )
+    {
         packet = packet[ 1..$ ];
     }
     

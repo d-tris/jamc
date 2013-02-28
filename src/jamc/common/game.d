@@ -83,27 +83,31 @@ public:
             run = false;
         });
         
-        version(client) while( run )
-        {
-            socketclient.handleServer();
-            socketclient.write("vzbud se ty servre jeden!\0");
+        while( run ){
             
-            //herni logika jde sem
+            version(client){
+                socketclient.handleServer();
+                socketclient.write("vzbud se ty servre jeden!\0"); // DEBUG
+                
+                //herni logika jde sem
+                
+                m_graphicsMgr.beginFrame();
+                // kresleni sceny jde sem
+                m_gui.draw();
+                m_graphicsMgr.finishFrame();
+            }
+
+            version( server ){
+                socketserver.handleClients();
+                socketserver.handleClients();
+                // dalsi logika serveru
+            }
             
-            m_graphicsMgr.beginFrame();
-            // kresleni sceny jde sem
-            m_gui.draw();
-            m_graphicsMgr.finishFrame();
-            
-            Thread.sleep( dur!("msecs")( 200 ) );
+            Thread.sleep( msecs( 200 ) );
         }
         
-        version( server ) while(true){
-            socketserver.handleClients();
-            
-            // dalsi logika serveru
-            
-            Thread.sleep( dur!("msecs")( 200 ) );
+        version( client ){
+            socketclient.disconnect();
         }
         
         return 0;

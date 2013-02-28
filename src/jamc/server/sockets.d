@@ -2,6 +2,8 @@ module jamc.server.sockets;
 import jamc.api.logger;
 import jamc.api.game;
 import jamc.api.configuration;
+import jamc.api.packets;
+import jamc.api.network;
 
 import std.stdio;
 import std.socket;
@@ -40,33 +42,33 @@ public:
     }
     
     void handleClients(){
-        char buffer[] = new char[128];
+        ubyte buffer[];
+        buffer.length = 128;
         Address from;
-        long loaded = listener.receiveFrom(buffer,from);
         
+        long loaded = listener.receiveFrom(buffer,from);
         if( loaded != Socket.ERROR && loaded > 0 ){ // pokud nektery klient neco zaslal
-            
-            //game.logger.notice( "readed " ~ to!string(loaded) ~ " bytes from the client " ~ from.toAddrString() ~ ":" ~ from.toPortString() ~ ": " ~ to!string(buffer) );
             
             if(!(from.toString() in clients)){ // neprihlaseny
                 
                 // prihlasuje se a zname jeho sul
-                if(buffer[0]==0xFF && from.toString() in salts){
+                if(packetDecodeId(buffer)==packetType.loginRequest && from.toString() in salts){
                     
-                    string potentialUsername = to!string(buffer[ 2 .. 2+buffer[1] ]);
-                    string potentialPassword = to!string(buffer[ 2+buffer[1]+1 .. 2+buffer[1]+1 + buffer[2+buffer[1]] ]);
+                    LoginRequest request;
+                    packetDecodeData(request, buffer);
                     
-                    if( potentialPassword == cast(string)digest!SHA1( potentialUsername ~ "bagr" ~ salts[from.toString()].salt ) ){
+                    if( request.password == digest!SHA1( request.login ~ "bagr" ~ salts[from.toString()].salt ) ){
                         // prihlasen
-                        clients[from.toString()] = potentialUsername;
-                        game.logger.notice( "logged " ~ potentialUsername );
+                        clients[from.toString()] = request.login;
+                        game.logger.notice( "logged " ~ request.login );
                     }else{
                         // pristup odepren
-                        listener.sendTo(to!string(cast(char)0xFE), from);
-                        game.logger.notice( "rejected " ~ potentialUsername );
+                        listener.sendTo( to!string( cast(char) packetType.loginDenied ), from );
+                        game.logger.notice( "rejected " ~ request.login );
                     }
                     
                 }else{
+                    
                     // neprihlaseny a nevi o tom, nebo prvotni pozadavek, nebo se prihlasuje, ale my uz nemame jeho sul
                     // posleme ze se musi prihlasit + novou sul hesla
                     string saltString;
@@ -79,7 +81,8 @@ public:
                         salts[from.toString()] = Salt(saltString);
                         game.logger.notice( "generated salt " ~ saltString ~ " for " ~ from.toString() );
                     }
-                    listener.sendTo( to!string(cast(char)0xFF) ~ saltString , from);
+                    listener.sendTo( to!string(cast(char)packetType.loginSaltReply) ~ saltString , from);
+                    
                 }
                 
             }else{ // prihlaseny
