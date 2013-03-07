@@ -4,6 +4,7 @@ import jamc.api.game;
 import jamc.api.material;
 import jamc.api.widgets.IWidget;
 import jamc.api.widgets.BaseWidget;
+import jamc.api.widgets.Button;
 import jamc.api.gui;
 import jamc.api.renderer;
 import jamc.util.gpu.buffer;
@@ -127,15 +128,17 @@ class GuiRenderFormat
     
 }
 
-class RenderProxy : IRenderProxy
+class RenderProxy : IRenderProxy, IRenderable
 {
 public:
     this( GuiRenderFormat renderFormat,
           IGpuAllocator!( GuiRenderFormat.vertex_format ) vertexManager,
           IGpuAllocator!( GuiRenderFormat.index_format ) indexManager,
-          IRenderable renderable )
+          IRenderProxy.IRenderable renderable )
     {
-        m_renderer = new Renderer!( GuiRenderFormat )( renderFormat, vertexManager, indexManager, renderable );
+        m_renderable = renderable;
+        m_renderer = new Renderer!( GuiRenderFormat )( renderFormat, vertexManager, indexManager, this );
+        
         m_alpha = 1.0;
         m_drawColor = rgba( 1.0, 0.0, 0.0, 0.5 );
     }
@@ -257,12 +260,19 @@ public:
         return m_renderer.indexAllocator;
     }
 
-    void draw()
+    void render()
     {
         m_renderer.draw();
     }
+    
+    // draw() z IRenderable
+    void draw()
+    {
+        m_renderable.draw( this );
+    }
 
 private:
+    IRenderProxy.IRenderable m_renderable;
     Renderer!( GuiRenderFormat ) m_renderer;
     double m_alpha;
     rgba m_drawColor;
@@ -280,7 +290,7 @@ class ClientGui : IGui
         m_indexAllocator = new GpuAllocator!( typeof( m_indexBuffer ) )( m_indexBuffer, 8192 );
     }
     
-    override IRenderProxy getNewRenderProxy( IRenderable renderable )
+    override IRenderProxy getNewRenderProxy( IRenderProxy.IRenderable renderable )
     {
         return new RenderProxy( m_format, m_vertexAllocator, m_indexAllocator, renderable );
     }

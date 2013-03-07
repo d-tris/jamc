@@ -14,7 +14,7 @@ import std.container;
 import std.datetime;
 import std.stdio;
 
-import CSFML.Window.Mouse;
+public import CSFML.Window.Mouse : sfMouseButton;
 
 interface IRenderProxy
 {
@@ -39,10 +39,15 @@ interface IRenderProxy
     void pushTransform();
     void popTransform();
 
-    void draw();
+    void render();
+    
+    interface IRenderable
+    {
+        void draw( IRenderProxy r );
+    }
 }
 
-class StencilRenderable : IRenderable
+class StencilRenderable : IRenderProxy.IRenderable
 {
     public:
         this( IWidget parent )
@@ -50,31 +55,22 @@ class StencilRenderable : IRenderable
             m_parent = parent;
         }
         
-        void draw()
+        void draw( IRenderProxy r )
         {
-            m_renderer.drawQuad( 0, 0, m_parent.size[0], m_parent.size[1] );
-        }
-        
-        @property IRenderProxy proxy()
-        {
-            return m_renderer;
-        }
-        
-        @property void proxy( IRenderProxy proxy )
-        {
-            m_renderer = proxy;
+            r.drawQuad( 0, 0, m_parent.size[0], m_parent.size[1] );
         }
         
     private:
         IWidget m_parent;
-        IRenderProxy m_renderer;
 }
 
-class BaseWidget : IWidget, IRenderable
+class BaseWidget : EventSource, IWidget, IRenderProxy.IRenderable
 {
 public:
     this( IGame game, vec2i pos, vec2i size )
     {
+        super( game.events );
+        
         m_game = game;
         m_position = pos;
         m_size = size;
@@ -92,7 +88,7 @@ public:
         
         m_renderer = m_game.gui.getNewRenderProxy( this );
         m_stencilRenderable = new StencilRenderable( this );
-        m_stencilRenderable.proxy = m_stencilRenderer = m_game.gui.getNewRenderProxy( m_stencilRenderable );
+        m_stencilRenderer = m_game.gui.getNewRenderProxy( m_stencilRenderable );
         
     }
     
@@ -103,11 +99,11 @@ public:
         parent.addChild( this );
     }
     
-    override void draw()
+    override void draw( IRenderProxy r )
     {
         // BaseWidget se nijak nevykresluje
-        m_renderer.redraw();
-        m_renderer.drawHorizontalGradient( 0, 0, size[0], size[1], rgba( 1.0f, 0.0f, 0.0f, 1.0f ), rgba( 0.0f, 1.0f, 0.0f, 0.0f ) ); 
+        //m_renderer.redraw();
+        r.drawHorizontalGradient( 0, 0, size[0], size[1], rgba( 1.0f, 0.0f, 0.0f, 1.0f ), rgba( 0.0f, 1.0f, 0.0f, 0.0f ) ); 
     }
     
     override void doDraw( int depth )
@@ -116,7 +112,7 @@ public:
         drawImpl();
 
         m_renderer.prepareStencilAddition( depth );
-        m_stencilRenderer.draw();
+        m_stencilRenderer.render();
 
         foreach( child; m_children )
         {
@@ -130,7 +126,7 @@ public:
         }
 
         m_renderer.prepareStencilSubtraction( depth );
-        m_stencilRenderer.draw();
+        m_stencilRenderer.render();
     }
     
     override @property void position( vec2i position )
@@ -352,9 +348,13 @@ public:
 
 protected:
 
+    /** 
+     * Implementuje konkrétní způsob vykreslení pouze tohoto elementu 
+     * přímo na obrazovku.
+     */
     void drawImpl()
     {
-        m_renderer.draw();
+        m_renderer.render();
     }
 
     IRenderProxy m_renderer;

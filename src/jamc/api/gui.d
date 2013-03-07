@@ -7,7 +7,7 @@ import jamc.util.gpu.renderer;
 
 interface IGui
 {
-    IRenderProxy getNewRenderProxy( IRenderable renderable );
+    IRenderProxy getNewRenderProxy( IRenderProxy.IRenderable renderable );
     
     @property IWidget mainPanel();
     @property void mainPanel( IWidget );

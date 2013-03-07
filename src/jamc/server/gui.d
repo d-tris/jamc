@@ -7,7 +7,7 @@ import jamc.api.widgets.IWidget;
 
 class ServerGui : IGui
 {
-    override IRenderProxy getNewRenderProxy( IRenderable renderable )
+    override IRenderProxy getNewRenderProxy( IRenderProxy.IRenderable renderable )
     {
         assert( 0, "Server can't render anything, you dumb shit!" );
         return null;

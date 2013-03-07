@@ -10,41 +10,6 @@ private alias void delegate(Object) DEvent;
 private extern (C) void rt_attachDisposeEvent(Object h, DEvent e);
 private extern (C) void rt_detachDisposeEvent(Object h, DEvent e);
 
-
-
-/**
- * Utilitisticka trida pouzitelna jako rodic jinych trid, ktere 
- * casto vyhazuji udalosti.
- * Priklad pouziti:
- * \code
- * class mujSuprButton : EventSource {
- *     ...
- *     this( IEventDispatcher ed ){ super( ed ); }
- *     ...
- *     // udalost bude vyslana z teto tridy za pouziti
- *     // drive ulozeneho dispatcheru
- *     onClick(){ raise( new ButtonClickEvent() ); } 
- *     ...
- * }
- */
-class EventSource
-{
-public:
-    this( IEventDispatcher dispatcher )
-    {
-        m_dispatcher = dispatcher;
-    }
-
-    void raise( T : IEvent )( T event )
-    {
-        m_dispatcher.raise( event, this );
-    }
-        
-private:
-    IEventDispatcher m_dispatcher;
-}
-
-
 class EventDispatcher : IEventDispatcher
 {
 public:
@@ -119,9 +84,10 @@ private:
 
 unittest
 {
-    class Ev1 : IEvent{};
-    class Ev2 : IEvent{};
-    class Ev3 : IEvent{};
+    class Ev1 : IEvent{}
+    class Ev2 : IEvent{}
+    class Ev3 : IEvent{}
+    class Guard{}
     
     {
         int caught = 0;
@@ -148,6 +114,27 @@ unittest
         ed.raise( new Ev2() );
         ed.raise( new Ev3() );
         assert( caught == 4 );
+    }
+    {
+        IEventDispatcher ed = new EventDispatcher();
+        int caught = 0;
+        
+        ed.raise( new Ev1() );
+        ed.raise( new Ev1() );
+        assert( caught == 0 );
+        
+        {
+            scope Guard g = new Guard();
+            ed.addListener( ( Ev1 e ){ caught++; }, null, g );
+            
+            ed.raise( new Ev1() );
+            ed.raise( new Ev1() );
+            assert( caught == 2 );
+        }
+        
+        ed.raise( new Ev1() );
+        ed.raise( new Ev1() );
+        assert( caught == 2 );
     }
     // TODO: zvetsit tento test
 }

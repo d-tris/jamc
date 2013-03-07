@@ -13,6 +13,7 @@ import jamc.api.gui;
 import jamc.api.logger;
 import jamc.api.configuration;
 import jamc.api.widgets.BaseWidget;
+import jamc.api.widgets.Button;
 
 import jamc.common.events;
 import jamc.common.logger;
@@ -63,7 +64,8 @@ public:
             m_gui = new ClientGui( this );
             
             m_gui.mainPanel = new BaseWidget( this, vec2i( 0, 0 ), m_graphicsMgr.screenSize );
-            new BaseWidget( m_gui.mainPanel, vec2i(100,100), m_graphicsMgr.screenSize - vec2i(200,200) );
+            new Button( m_gui.mainPanel, vec2i(100,100), m_graphicsMgr.screenSize - vec2i(200,200) );
+            
         }
     }
     override int run()

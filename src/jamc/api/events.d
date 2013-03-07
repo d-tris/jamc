@@ -90,3 +90,42 @@ interface IEventListener
 interface IEvent
 {
 }
+
+/**
+ * Utilitisticka trida pouzitelna jako rodic jinych trid, ktere 
+ * casto vyhazuji udalosti.
+ * Priklad pouziti:
+ * \code
+ * class mujSuprButton : EventSource {
+ *     ...
+ *     this( IEventDispatcher ed ){ super( ed ); }
+ *     ...
+ *     // udalost bude vyslana z teto tridy za pouziti
+ *     // drive ulozeneho dispatcheru
+ *     onClick(){ raise( new ButtonClickEvent() ); } 
+ *     ...
+ * }
+ */
+class EventSource
+{
+public:
+    this( IEventDispatcher dispatcher )
+    {
+        m_dispatcher = dispatcher;
+    }
+
+    IEventListener connect( EType : IEvent, RType )( RType delegate( EType ) theListener, Object guard = null )
+    {
+        return  m_dispatcher.addListener( theListener, this, guard );
+    }
+
+protected:
+    void raise( T : IEvent )( T event )
+    {
+        m_dispatcher.raise( event, this );
+    }
+        
+private:
+    IEventDispatcher m_dispatcher;
+}
+

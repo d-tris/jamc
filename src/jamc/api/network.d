@@ -211,10 +211,9 @@ unittest
     void test( T )( uint id, T val )
     {
         ubyte[] packet = packetEncode( id, val );
+        assert( id == packetDecodeId( packet ) );
         T outVal;
-        uint outId;
-        packetDecode( outId, outVal, packet );
-        assert( outId == id );
+        packetDecodeData( outVal, packet );
         assert( outVal == val );
         
     }
