@@ -1,6 +1,7 @@
 module jamc.api.widgets.BaseWidget;
 
 import jamc.api.events;
+import jamc.api.eventTypes;
 import jamc.api.game;
 import jamc.api.material;
 import jamc.api.renderer;
@@ -13,8 +14,6 @@ import std.algorithm;
 import std.container;
 import std.datetime;
 import std.stdio;
-
-public import CSFML.Window.Mouse : sfMouseButton;
 
 interface IRenderProxy
 {
@@ -119,7 +118,6 @@ public:
             if( child.visible ){
                 m_renderer.pushTransform();
                 m_renderer.translate( child.position[0], child.position[1] );
-                writeln( "Posunuju dítě na ", child.position );
                 child.doDraw( depth + 1 );
                 m_renderer.popTransform();
             }
@@ -231,19 +229,19 @@ public:
         m_children.insertFront( child );
     }
 
-    override void handleDrag( vec2i delta, sfMouseButton mb )
+    override void handleDrag( vec2i delta, Key mb )
     {
         m_game.events.raise( new DragEvent( delta, mb ), this );
     }
     
-    override bool handleMouseClick( vec2i position, sfMouseButton mb, bool up )
+    override bool handleMouseClick( vec2i position, Key mb, bool released )
     {
         foreach( child; m_children )
         {
             vec2i relativePosition = position - child.position;
             if( child.visible && child.isPointInside( relativePosition ) )
             {
-                if( child.handleMouseClick( relativePosition, mb, up ) )
+                if( child.handleMouseClick( relativePosition, mb, released ) )
                 {
                     break;
                 }
@@ -256,14 +254,14 @@ public:
         }
 
         bool wasDown = m_mouseDown[mb];
-        m_mouseDown[mb] = !up;
+        m_mouseDown[mb] = !released;
         
         // tlačítko bylo právě puštěno
-        if( wasDown && up ){
+        if( wasDown && released ){
             game.events.raise( new ClickEvent( position, mb ), this );
         }
         
-        if( up )
+        if( released )
         {
             game.events.raise( new MouseUpEvent( position, mb ), this );
         }
@@ -372,7 +370,7 @@ protected:
     bool            m_allowMouseClickPropagation;
     bool            m_allowKeyboardInput;
     bool            m_mouseOver;
-    bool[sfMouseButton.max] m_mouseDown;
+    bool[Key.max] m_mouseDown;
 
     double          m_alphaStart;
     SysTime         m_timeStart;
@@ -387,24 +385,24 @@ protected:
 // GUI události
 class DragEvent : IEvent
 {
-    this( in vec2i delta, in sfMouseButton button )
+    this( in vec2i delta, in Key button )
     {
         this.delta = delta;
         this.button = button;
     }
     vec2i delta;
-    sfMouseButton button;
+    Key button;
 }
 
 mixin template MouseButtonEvent()
 {
-    this( in vec2i position, in sfMouseButton button )
+    this( in vec2i position, in Key button )
     {
         this.position = position;
         this.button = button;
     }
     vec2i position;
-    sfMouseButton button;
+    Key button;
 }
 
 class ClickEvent : IEvent

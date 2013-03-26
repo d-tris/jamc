@@ -55,7 +55,7 @@ public:
     }
     
     void write(const(void)[] data){
-        game.logger.notice("writing to the server...");
+        //game.logger.notice("writing to the server...");
         if(server.send(data) == Socket.ERROR){
             game.logger.warning("cannot write to the server!");
         }

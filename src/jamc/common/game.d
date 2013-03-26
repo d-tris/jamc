@@ -64,7 +64,13 @@ public:
             m_gui = new ClientGui( this );
             
             m_gui.mainPanel = new BaseWidget( this, vec2i( 0, 0 ), m_graphicsMgr.screenSize );
-            new Button( m_gui.mainPanel, vec2i(100,100), m_graphicsMgr.screenSize - vec2i(200,200) );
+            foreach( x; 0..8 )
+            {
+                foreach( y; 0..8 )
+                {
+                    new Button( m_gui.mainPanel, vec2i(200,50) + vec2i(50*x,50*y), vec2i( 49, 49 ) );
+                }
+            }
             
         }
     }
@@ -105,7 +111,7 @@ public:
                 // dalsi logika serveru
             }
             
-            Thread.sleep( msecs( 200 ) );
+            Thread.sleep( msecs( 50 ) );
         }
         
         version( client ){

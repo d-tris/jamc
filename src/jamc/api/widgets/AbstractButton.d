@@ -1,5 +1,6 @@
 module jamc.api.widgets.AbstractButton;
 
+import jamc.api.eventTypes;
 import jamc.api.widgets.BaseWidget;
 import jamc.api.widgets.IWidget;
 import jamc.util.vector;
@@ -15,7 +16,7 @@ class AbstractButton : BaseWidget
         super( parent, pos, size );
         
         connect( ( MouseDownEvent e ){ 
-            if( e.button == sfMouseButton.sfMouseLeft )
+            if( e.button == Key.MouseLeft )
             {
                 m_pressed = true;
                 raise( new ButtonStateChangedEvent() );
@@ -23,7 +24,7 @@ class AbstractButton : BaseWidget
         } );
         
         connect( ( MouseUpEvent e ){
-            if( e.button == sfMouseButton.sfMouseLeft )
+            if( e.button == Key.MouseLeft )
             {
                 m_pressed = false;
                 raise( new ButtonStateChangedEvent() );

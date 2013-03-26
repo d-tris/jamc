@@ -1,5 +1,6 @@
 module jamc.client.gui;
 
+import jamc.api.eventTypes;
 import jamc.api.game;
 import jamc.api.material;
 import jamc.api.widgets.IWidget;
@@ -16,6 +17,7 @@ import jamc.util.vector;
 import GL.glu;
 
 import std.algorithm;
+import std.stdio;
 
 class GuiRenderFormat
 {
@@ -290,6 +292,8 @@ class ClientGui : IGui
         m_indexAllocator = new GpuAllocator!( typeof( m_indexBuffer ) )( m_indexBuffer, 8192 );
     }
     
+    
+    
     override IRenderProxy getNewRenderProxy( IRenderProxy.IRenderable renderable )
     {
         return new RenderProxy( m_format, m_vertexAllocator, m_indexAllocator, renderable );
@@ -303,6 +307,27 @@ class ClientGui : IGui
     override @property void mainPanel( IWidget widget )
     {
         m_mainPanel = widget;
+        
+        m_game.events.connect( ( KeyPressEvent e ) {
+            if( e.key >= Key.MouseLeft ) // jedná se o tlačítko myši?
+            {
+                writeln( "OH GOD KLIK!" );
+                m_mainPanel.handleMouseClick( e.position, e.key, false );
+            }
+        } );
+        
+        m_game.events.connect( ( KeyReleaseEvent e ) {
+            if( e.key >= Key.MouseLeft ) // jedná se o tlačítko myši?
+            {
+                writeln( "OH GOD DEKLIK!" );
+                m_mainPanel.handleMouseClick( e.position, e.key, true );
+            }
+        } );
+        
+        m_game.events.connect( ( jamc.api.eventTypes.MouseMoveEvent e ) {
+            m_mainPanel.handleMouseMove( e.position, true );
+        } );
+            
     }
     
     override void draw()

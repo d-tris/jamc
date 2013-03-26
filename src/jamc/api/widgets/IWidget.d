@@ -1,7 +1,7 @@
 module jamc.api.widgets.IWidget;
 
 import core.time;
-import CSFML.Window.Mouse;
+import jamc.api.eventTypes;
 import jamc.api.game;
 import jamc.util.vector;
 
@@ -78,7 +78,7 @@ interface IWidget
      * \param delta O kolik se posunula myš
      * \param mb které tlačítko je stisknuto
      */
-    void    handleDrag( vec2i delta, sfMouseButton mb );
+    void    handleDrag( vec2i delta, Key mb );
 
     /** 
      * Propaguje a reaguje na stisk nebo uvolnění tlačítka.
@@ -87,7 +87,7 @@ interface IWidget
      * \param up       Pokud true, tak bylo tlačítko uvolněno, jinak bylo stisknuto
      * \return Zda se má událost kliku propagovat do rodičovského elementu
      */
-    bool    handleMouseClick( vec2i position, sfMouseButton mb, bool up );
+    bool    handleMouseClick( vec2i position, Key mb, bool up );
     
     /**
      * Propaguje a reaguje na pohyb myši

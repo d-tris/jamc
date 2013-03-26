@@ -30,9 +30,17 @@ public:
      * existuje objekt \a guard. Pokud je \a guard null, tak 
      * posluchac existuje do zniceni tohoto IEventDispatcheru.
      */
-    IEventListener addListener( EType : IEvent, RType )( RType delegate( EType ) theListener, Object source = null, Object guard = null)
+    IEventListener addListener( EType : IEvent, RType )( RType delegate( EType ) theListener, Object source = null, Object guard = null )
     {
         return onNewListener( new EventListener!( EType, RType delegate( EType ) )( theListener, typeid( EType ), source ), guard );
+    }
+    
+    /**
+     * Prida posluchace podobne jako addListener, ale bez zdroje
+     */
+    IEventListener connect( EType : IEvent, RType )( RType delegate( EType ) theListener, Object guard = null )
+    {
+        return addListener( theListener, null, guard );
     }
     
     void removeListener( IEventListener listener );

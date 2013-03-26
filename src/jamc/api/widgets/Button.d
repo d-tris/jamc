@@ -11,6 +11,9 @@ class Button : AbstractButton
     this( IWidget parent, in vec2i pos, in vec2i size )
     {
         super( parent, pos, size );
+        connect( ( ButtonStateChangedEvent e ) {
+            m_renderer.redraw();
+        } );
     }
     
     override void draw( IRenderProxy r )
@@ -25,7 +28,7 @@ class Button : AbstractButton
         );
         
         if( !m_pressed ){
-            r.setDrawColor( rgba( 1.0, 1.0, 1.0, 0.2 ) );
+            r.setDrawColor( rgba( 1.0, 1.0, 1.0, 0.1 ) );
             r.drawQuad( 1, 1, size[0], size[1] / 2);
         }
     

@@ -65,7 +65,6 @@ class BufferObjectManager( BufferFormat )
     void upload( value_type[] data, size_type start )
     {
         glPushBuffer( m_target, m_buffer );
-        writeln( "Uploaduji: ", data );
         glBufferSubData( m_target, start * value_type.sizeof, data.length * value_type.sizeof, data.ptr );
         glPopBuffer( m_target );
     }
