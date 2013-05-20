@@ -3,6 +3,7 @@ module jamc.api.widgets.Button;
 import jamc.api.widgets.AbstractButton;
 import jamc.api.widgets.BaseWidget;
 import jamc.api.widgets.IWidget;
+import jamc.api.widgets.Label;
 import jamc.util.vector;
 import jamc.util.color;
 
@@ -11,6 +12,9 @@ class Button : AbstractButton
     this( IWidget parent, in vec2i pos, in vec2i size )
     {
         super( parent, pos, size );
+        
+        new Label( this, vec2i(0,0), size, "BUTON!" );
+        
         connect( ( ButtonStateChangedEvent e ) {
             m_renderer.redraw();
         } );

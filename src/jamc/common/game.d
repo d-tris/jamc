@@ -8,6 +8,7 @@ import std.socket;
 import jamc.api.game;
 import jamc.api.events;
 import jamc.api.eventTypes;
+import jamc.api.font;
 import jamc.api.graphics;
 import jamc.api.gui;
 import jamc.api.logger;
@@ -19,24 +20,31 @@ import jamc.common.events;
 import jamc.common.logger;
 import jamc.common.configuration;
 
-version( server ) import jamc.server.sockets;
-version( client ) import jamc.client.sockets;
+version( server )
+{
+    import jamc.server.sockets;
+    import jamc.server.graphics;
+    import jamc.server.gui;
+}
 
-version( server ) import jamc.server.graphics;
-version( client ) import jamc.client.graphics;
-
-version( server ) import jamc.server.gui;
-version( client ) import jamc.client.gui;
+version( client )
+{
+    import jamc.client.sockets;
+    import jamc.client.font;
+    import jamc.client.graphics;
+    import jamc.client.gui;
+}
 
 import jamc.util.vector;
 
 class JamcGame : IGame
 {
 private:
-    IEventDispatcher m_eventDispatch;
-    IGraphicsMgr m_graphicsMgr;
+    IEventDispatcher _eventDispatch;
+    IGraphicsMgr _graphicsMgr;
     ILogger loggerObject;
-    IGui m_gui;
+    IGui _gui;
+    IFontMgr _fontMgr;
     
     version(server) ServerConf serverconf;
     version(client) ClientConf clientconf;
@@ -47,28 +55,34 @@ private:
 public:
     this()
     {
-        m_eventDispatch = new EventDispatcher();
+        _eventDispatch = new EventDispatcher();
         
         version( server ){
             loggerObject = new Logger( this, Logger.level.notice, true, "server.log" );
-            loadConfiguration!(ServerConf)( this, serverconf, "server.xml" );
+            loadConfiguration( this, serverconf, "server.xml" );
             socketserver = new SocketServer( this, serverconf );
-            m_graphicsMgr = new ServerGraphicsMgr();
-            m_gui = new ServerGui();
+            _graphicsMgr = new ServerGraphicsMgr();
+            _gui = new ServerGui();
         }
         version( client ){
             loggerObject = new Logger( this, Logger.level.notice, true, "client.log" );
-            loadConfiguration!(ClientConf)( this, clientconf, "client.xml" );
+            loadConfiguration( this, clientconf, "client.xml" );
             socketclient = new SocketClient( this, clientconf );
-            m_graphicsMgr = new ClientGraphicsMgr( this );
-            m_gui = new ClientGui( this );
+            _graphicsMgr = new ClientGraphicsMgr( this );
+            _fontMgr = new ClientFontMgr();
+            _gui = new ClientGui( this );
             
-            m_gui.mainPanel = new BaseWidget( this, vec2i( 0, 0 ), m_graphicsMgr.screenSize );
+            
+            _gui.mainPanel = new BaseWidget( this, vec2i( 0, 0 ), _graphicsMgr.screenSize );
             foreach( x; 0..8 )
             {
                 foreach( y; 0..8 )
                 {
-                    new Button( m_gui.mainPanel, vec2i(200,50) + vec2i(50*x,50*y), vec2i( 49, 49 ) );
+                    auto button = new Button( _gui.mainPanel, vec2i(200,50) + vec2i(50*x,50*y), vec2i( 49, 49 ) );
+                    if( x == 4 && y == 4 )
+                    {
+                        new Button( button, vec2i( 20, 20 ), vec2i( 49, 49 ) );
+                    }
                 }
             }
             
@@ -99,10 +113,10 @@ public:
                 
                 //herni logika jde sem
                 
-                m_graphicsMgr.beginFrame();
+                _graphicsMgr.beginFrame();
                 // kresleni sceny jde sem
-                m_gui.draw();
-                m_graphicsMgr.finishFrame();
+                _gui.draw();
+                _graphicsMgr.finishFrame();
             }
 
             version( server ){
@@ -123,12 +137,17 @@ public:
     
     override @property IEventDispatcher events()
     {
-        return m_eventDispatch;
+        return _eventDispatch;
     }
     
     override @property IGraphicsMgr gfx()
     {
-        return m_graphicsMgr;
+        return _graphicsMgr;
+    }
+    
+    override @property IFontMgr fonts()
+    {
+        return _fontMgr;
     }
     
     override @property ILogger logger()
@@ -138,7 +157,7 @@ public:
     
     override @property IGui gui()
     {
-        return m_gui;
+        return _gui;
     }
 }
 

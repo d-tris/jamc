@@ -3,7 +3,7 @@
 SRCDIR=src
 OBJDIR=obj
 RDMDFLAGS=-g -I$(SRCDIR)
-CLIENTFLAGS=-L-lcsfml-graphics -L-lcsfml-window -L-lsfml-graphics -L-lsfml-window -L-lGL -L-lGLU -unittest
+CLIENTFLAGS=-L-lcsfml-graphics -L-lcsfml-window -L-lsfml-graphics -L-lsfml-window -L-lGL -L-lGLU -L-lftgl -L-lfreetype -unittest
 SERVERFLAGS=
 
 all: server client

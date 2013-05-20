@@ -5,7 +5,7 @@ import jamc.api.eventTypes;
 import jamc.api.game;
 import jamc.api.material;
 import jamc.api.renderer;
-import jamc.api.widgets.IWidget;
+public import jamc.api.widgets.IWidget;
 
 import jamc.util.color;
 import jamc.util.vector;
