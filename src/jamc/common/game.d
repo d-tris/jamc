@@ -12,6 +12,7 @@ import jamc.api.font;
 import jamc.api.graphics;
 import jamc.api.gui;
 import jamc.api.logger;
+import jamc.api.registrator;
 import jamc.api.configuration;
 import jamc.api.widgets.BaseWidget;
 import jamc.api.widgets.Button;
