@@ -1,20 +1,32 @@
 module jamc.util.vector;
 
+import std.array : join;
+import std.math : sqrt;
+import std.range : repeat, lockstep;
 import std.traits;
-import std.math;
-import std.range;
+import std.typetuple : TypeTuple;
+
+import std.stdio;
 
 mixin template VectorBase( T, size_t dim )
 {
+    import std.stdio;
+    
+    private:
+    
+    static string generateStorageType()
+    {
+        return "TypeTuple!( " ~ repeat( "T", dim ).join( ", " ) ~ " )";
+    }
+    
+    mixin( q{ alias Storage = } ~ generateStorageType() ~ q{ ; });
+    
+    public:
+    
     alias valueType = T;
     enum dimensions = dim;
     
-    this( const T[] init... )
-    in
-    {
-        assert( init.length == dim );
-    }
-    body
+    this( Storage init )
     {
         data = init;
     }
@@ -23,24 +35,24 @@ mixin template VectorBase( T, size_t dim )
     const typeof(this) opUnary( string op )()
     if( op == "-" )
     {
-        T[dim] ret = data;
-        ret[] *= -1;
+        Storage ret = data;
+        foreach( ref e; ret )
+        {
+            e *= -1;
+        }
+        
         return typeof(this)( ret );
-    }
-    
-    /// Operace unarniho minus na prvku vektoru.
-    const T opIndexUnary( string op )( size_t i )
-    if( op == "-" )
-    {
-        return -data[ i ];
     }
     
     /// Operace vektoroveho souctu a rozdilu
     const typeof(this) opBinary( string op )( typeof(this) rhs ) const
     if( op == "+" || op == "-" )
     {
-        T[dim] ret = data;
-        mixin( "ret[] " ~ op ~ "= rhs.data[];" );
+        Storage ret = data;
+        foreach( i, ref e; ret )
+        {
+            mixin( "e " ~ op ~ "= rhs.data[i];" );
+        }
         
         return typeof(this)( ret );
     }
@@ -49,8 +61,12 @@ mixin template VectorBase( T, size_t dim )
     const typeof(this) opBinary( string op )( T rhs ) const
     if( op == "*" || op == "/" )
     {
-        T[dim] ret = data;
-        mixin( "ret[] " ~ op ~ "= rhs;" );
+        Storage ret = data;
+        foreach( ref e; ret )
+        {
+            mixin( "e " ~ op ~ "= rhs;" );
+        }
+        
         return typeof(this)( ret );
     }
     
@@ -58,8 +74,12 @@ mixin template VectorBase( T, size_t dim )
     const typeof(this) opBinaryRight( string op )( T lhs ) const
     if( op == "*" )
     {
-        T[dim] ret = data;
-        mixin( "ret[] " ~ op ~ "= lhs;" );
+        Storage ret = data;
+        foreach( ref e; ret )
+        {
+            e *= lhs;
+        }
+        
         return typeof(this)( ret );
     }
     
@@ -69,34 +89,35 @@ mixin template VectorBase( T, size_t dim )
         return data == rhs.data;
     }
     
-    /// Operace prirazeni do prvku vektoru
-    T opIndexAssign( T rhs, size_t i )
-    {
-        return data[ i ] = rhs;
-    }
-    
     /// Operace pricteni a odecteni vektoru
     typeof(this) opOpAssign( string op )( typeof(this) rhs )
     if( op == "+" || op == "-" )
     {
-        mixin( "data[] " ~ op ~ "= rhs.data[];" );
+        foreach( i, ref e; data )
+        {
+            mixin( "e " ~ op ~ "= rhs.data[i];" );
+        }
+        
         return this;
     }
     
-    /// Operace vynasobeni a vydeleni cisla vektorem
+    /// Operace vynasobeni a vydeleni vektoru skalarem
     typeof(this) opOpAssign( string op )( T rhs )
     if( op == "*" || op == "/" )
     {
-        mixin( "data[] " ~ op ~ "= rhs;" );
+        foreach( ref e; data )
+        {
+            mixin( "e " ~ op ~ "= rhs;" );
+        }
+        
         return this;
     }
     
-    T opIndex( size_t i ) const
-    {
-        return data[ i ];
-    }
+    alias data this;
     
-    private T[dim] data;
+    private:
+    
+    Storage data;
 }
 
 struct Vector( T, size_t dim )
@@ -116,9 +137,9 @@ struct Vector( T, size_t dim )
     T dot( const Vector rhs )
     {
         T sum = 0;
-        foreach( a, b; lockstep( data[], rhs.data[] ) )
+        foreach( i, ref e; data )
         {
-            sum += a * b;
+            sum += e * rhs.data[i];
         }
         return sum;
     }
@@ -139,23 +160,26 @@ struct Vector( T, size_t dim )
             
         void normalize()
         {
-            auto lenInv = 1 / length();
-            data[] *= lenInv;
+            auto lenInv = 1.0 / length();
+            foreach( ref e; data )
+            {
+                e *= lenInv;
+            }
         }
     } 
 }
 
 alias vec2i = Vector!( int, 2 );
-alias vec3i = Vector!( int, 2 );
-alias vec4i = Vector!( int, 2 );
+alias vec3i = Vector!( int, 3 );
+alias vec4i = Vector!( int, 4 );
 
 alias vec2f = Vector!( float, 2 );
-alias vec3f = Vector!( float, 2 );
-alias vec4f = Vector!( float, 2 );
+alias vec3f = Vector!( float, 3 );
+alias vec4f = Vector!( float, 4 );
 
 alias vec2d = Vector!( double, 2 );
-alias vec3d = Vector!( double, 2 );
-alias vec4d = Vector!( double, 2 );
+alias vec3d = Vector!( double, 3 );
+alias vec4d = Vector!( double, 4 );
 
 unittest
 {

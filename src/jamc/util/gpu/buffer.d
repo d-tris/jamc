@@ -5,8 +5,6 @@ import std.container;
 import std.conv;
 import std.exception;
 
-import std.stdio;
-
 import jamc.util.gpu.gl;
 public import jamc.util.gpu.ibuffer;
 
@@ -29,11 +27,6 @@ class BufferObjectManager( BufferFormat )
 
     void allocate( size_type size )
     {
-        GLuint[8] buffery;
-        glGenBuffers( 8, buffery.ptr );
-        
-        writeln( buffery );
-        
         clear();
         glGenBuffers( 1, &m_buffer );
         enforce( m_buffer, "Nedostali jsme OGL buffer" );
@@ -48,7 +41,7 @@ class BufferObjectManager( BufferFormat )
         GLuint oldBuffer = m_buffer;
         glPushBuffer( m_target, oldBuffer );
 
-        auto oldData = glMapBufferFP( m_target, GL_READ_ONLY );
+        auto oldData = glMapBuffer( m_target, GL_READ_ONLY );
 
         glGenBuffers( 1, &m_buffer );
         glPushBuffer( m_target, m_buffer );
@@ -209,10 +202,8 @@ private:
     
     BlockMap.Range findFreeBlock( size_type length )
     {
-        writeln( "Hledám blok délky ", length, "B..." );
         for( auto r = m_freeBlocks[]; !r.empty; r.popBack() )
         {
-            writeln( "Zkouším prázdný blok ", r.back );
             if( r.back.length >= length )
             {
                 return m_freeBlocks.equalRange( r.back );

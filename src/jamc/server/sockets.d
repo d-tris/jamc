@@ -1,4 +1,5 @@
 module jamc.server.sockets;
+
 import jamc.api.logger;
 import jamc.api.game;
 import jamc.api.configuration;
@@ -42,7 +43,7 @@ public:
     }
     
     void handleClients(){
-        ubyte buffer[];
+        ubyte[] buffer;
         buffer.length = 128;
         Address from;
         
@@ -55,7 +56,7 @@ public:
                 if(packetDecodeId(buffer)==packetType.loginRequest && from.toString() in salts){
                     
                     LoginRequest request;
-                    packetDecodeData(request, buffer);
+                    //packetDecodeData(request, buffer);
                     
                     if( request.password == digest!SHA1( request.login ~ "bagr" ~ salts[from.toString()].salt ) ){
                         // prihlasen

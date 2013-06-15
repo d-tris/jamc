@@ -10,9 +10,9 @@ struct Color( T, size_t dim )
     
     void normalize()
     {
-        foreach( i; 0..dim )
+        foreach( e; data )
         {
-            data[i] = min( 1.0, max( data[i], 0.0 ) );
+            e = min( 1.0, max( e, 0.0 ) );
         }
     }
     

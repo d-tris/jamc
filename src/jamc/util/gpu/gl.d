@@ -68,7 +68,7 @@ version(Windows)
 }
 else
 {
-    // ostatni na X zalozene OS
+    // ostatni, na X zalozene, OS
     extern(System) void function() glXGetProcAddress( const(char)* proc );
     alias glGetProcAddress = glXGetProcAddress;
 }
@@ -102,7 +102,7 @@ GLF!(void function(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid
 GLF!(void function(GLenum target, GLintptr offset, GLsizeiptr size, GLvoid* data)) glGetBufferSubData;
 
 @LoadGL!( "glMapBuffer", "glMapBufferARB" )
-GLF!(GLvoid* function(GLenum target, GLenum access)) glMapBufferFP;
+GLF!(GLvoid* function(GLenum target, GLenum access)) glMapBuffer;
 
 @LoadGL!( "glUnmapBuffer", "glUnmapBufferARB" )
 GLF!(GLboolean function(GLenum target)) glUnmapBuffer;
