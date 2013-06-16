@@ -173,6 +173,10 @@ alias vec2i = Vector!( int, 2 );
 alias vec3i = Vector!( int, 3 );
 alias vec4i = Vector!( int, 4 );
 
+alias vec2ui = Vector!( uint, 2 );
+alias vec3ui = Vector!( uint, 3 );
+alias vec4ui = Vector!( uint, 4 );
+
 alias vec2f = Vector!( float, 2 );
 alias vec3f = Vector!( float, 3 );
 alias vec4f = Vector!( float, 4 );

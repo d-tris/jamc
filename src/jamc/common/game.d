@@ -21,6 +21,8 @@ import jamc.common.events;
 import jamc.common.logger;
 import jamc.common.configuration;
 
+import jamc.util.spatialTree;
+
 version( server )
 {
     import jamc.server.sockets;

@@ -20,7 +20,7 @@ class Registrator {
     }
     
     public uint generateIdOfName(string name){
-        if(existName(name)){
+        if(nameExists(name)){
             return assignment[name];
         }else{
             lastId++;
