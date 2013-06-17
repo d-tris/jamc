@@ -9,11 +9,11 @@ import jamc.util.vector;
  * maxDepth určuje hloubku stromu a tedy rozsah souřadnic.
  * Platí, že rozsah souřadnic je od 0 do 2 ^ maxDepth - 1 včetně
  */
-class SpatialTree( T, size_t dim, size_t maxDepth )
+pure class SpatialTree( T, size_t dim, size_t maxDepth )
 {
     static assert( maxDepth > 0 );
     
-    T opIndex( Vector!( uint, dim ) coord )
+    inout( T ) opIndex( Vector!( uint, dim ) coord ) inout
     in
     {
         foreach( c; coord )
@@ -23,7 +23,7 @@ class SpatialTree( T, size_t dim, size_t maxDepth )
     }    
     body
     {
-        Node* currentNode = &topLevel;
+        auto currentNode = &topLevel;
         
         for( size_t i = maxDepth - 1; currentNode.nodes !is null; i-- )
         {
@@ -39,7 +39,7 @@ class SpatialTree( T, size_t dim, size_t maxDepth )
         return currentNode.data;
     }
     
-    private:
+private:
 
     struct Node
     {
@@ -55,7 +55,15 @@ class SpatialTree( T, size_t dim, size_t maxDepth )
 
 unittest
 {
-    auto tree = new SpatialTree!( int, 3, 5 );
-    assert( tree[ vec3ui( 0,0,0 ) ] == int.init );
-    assert( tree[ vec3ui( 31,31,31 ) ] == int.init );
+    auto tree1 = new SpatialTree!( int, 3, 8 );
+    assert( tree1[ vec3ui( 0,0,0 ) ] == int.init );
+    assert( tree1[ vec3ui( 31,31,31 ) ] == int.init );
+    
+    auto tree2 = new const( SpatialTree!( int, 3, 8 ) );
+    assert( tree2[ vec3ui( 0,0,0 ) ] == int.init );
+    assert( tree2[ vec3ui( 31,31,31 ) ] == int.init );
+    
+    auto tree3 = new immutable( SpatialTree!( int, 3, 8 ) );
+    assert( tree3[ vec3ui( 0,0,0 ) ] == int.init );
+    assert( tree3[ vec3ui( 31,31,31 ) ] == int.init );
 }
