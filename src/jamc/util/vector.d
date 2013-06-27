@@ -31,6 +31,14 @@ mixin template VectorBase( T, size_t dim )
         data = init;
     }
     
+    this( T init )
+    {
+        foreach( datum; data )
+        {
+            datum = init;
+        }
+    }
+    
     /// Operace unarniho minus. Obraci smer vektoru.
     const typeof(this) opUnary( string op )()
     if( op == "-" )
