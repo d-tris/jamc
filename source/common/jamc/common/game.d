@@ -23,14 +23,14 @@ import jamc.common.configuration;
 
 import jamc.util.spatialTree;
 
-version( server )
+version( JamcServer )
 {
     import jamc.server.sockets;
     import jamc.server.graphics;
     import jamc.server.gui;
 }
 
-version( client )
+version( JamcClient )
 {
     import jamc.client.sockets;
     import jamc.client.font;
@@ -49,28 +49,28 @@ private:
     IGui _gui;
     IFontMgr _fontMgr;
     
-    version(server) ServerConf serverconf;
-    version(client) ClientConf clientconf;
+    version(JamcServer) ServerConf serverconf;
+    version(JamcClient) ClientConf clientconf;
     
-    version(server) SocketServer socketserver;
-    version(client) SocketClient socketclient;
+    version(JamcServer) SocketServer socketserver;
+    version(JamcClient) SocketClient socketclient;
     
 public:
     this()
     {
         _eventDispatch = new EventDispatcher();
         
-        version( server ){
+        version( JamcServer ){
             loggerObject = new Logger( this, Logger.level.notice, true, "server.log" );
             loadConfiguration( this, serverconf, "server.xml" );
             socketserver = new SocketServer( this, serverconf );
             _graphicsMgr = new ServerGraphicsMgr();
             _gui = new ServerGui();
         }
-        version( client ){
+        version( JamcClient ){
             loggerObject = new Logger( this, Logger.level.notice, true, "client.log" );
             loadConfiguration( this, clientconf, "client.xml" );
-            socketclient = new SocketClient( this, clientconf );
+            //socketclient = new SocketClient( this, clientconf );
             _graphicsMgr = new ClientGraphicsMgr( this );
             _fontMgr = new ClientFontMgr();
             _gui = new ClientGui( this );
@@ -93,14 +93,14 @@ public:
     }
     override int run()
     {
-        version( client ) logger.notice("client is starting...");
-        version( server ) logger.notice("server is starting...");
+        version( JamcClient ) logger.notice("client is starting...");
+        version( JamcServer ) logger.notice("server is starting...");
         
-        version( client ){
-            socketclient.connect();
-            socketclient.login(clientconf.login,clientconf.password);
-            socketclient.write("ahoj servere!\0");
-        }
+        //~ version( JamcClient ){
+            //~ socketclient.connect();
+            //~ socketclient.login(clientconf.login,clientconf.password);
+            //~ socketclient.write("ahoj servere!\0");
+        //~ }
         
         bool run = true;
         
@@ -110,9 +110,9 @@ public:
         
         while( run ){
             
-            version(client){
-                socketclient.handleServer();
-                socketclient.write("vzbud se ty servre jeden!\0"); // DEBUG
+            version(JamcClient){
+                //~ socketclient.handleServer();
+                //~ socketclient.write("vzbud se ty servre jeden!\0"); // DEBUG
                 
                 //herni logika jde sem
                 
@@ -122,7 +122,7 @@ public:
                 _graphicsMgr.finishFrame();
             }
 
-            version( server ){
+            version(JamcServer){
                 socketserver.handleClients();
                 socketserver.handleClients();
                 // dalsi logika serveru
@@ -131,9 +131,9 @@ public:
             Thread.sleep( msecs( 50 ) );
         }
         
-        version( client ){
-            socketclient.disconnect();
-        }
+        //~ version( JamcClient ){
+            //~ socketclient.disconnect();
+        //~ }
         
         return 0;
     }

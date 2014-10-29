@@ -122,13 +122,11 @@ mixin template VectorBase( T, size_t dim )
     }
     
     alias data this;
-    
-    private:
-    
     Storage data;
 }
 
-struct Vector( T, size_t dim )
+struct Vector( T, size_t dim, Accessors... )
+if (dim == Accessors.length)
 {
     mixin VectorBase!( T, dim );
     
@@ -175,23 +173,50 @@ struct Vector( T, size_t dim )
             }
         }
     } 
+	
+	static string generateAccessors()
+	{
+		string ret = "";
+		foreach (i, acc; Accessors)
+		{
+			import std.string : format;
+			
+			ret ~= q{
+				pure nothrow T %s()
+				{
+					return data[%d];
+				}
+				
+				pure nothrow void %s(T %sval)
+				{
+					data[%d] = %sval;
+				}
+			}.format(acc, i, acc, acc, i, acc);
+		}
+		
+		return ret;
+	}
+	
+	mixin(generateAccessors());
+
+	alias data this;
 }
 
-alias vec2i = Vector!( int, 2 );
-alias vec3i = Vector!( int, 3 );
-alias vec4i = Vector!( int, 4 );
+alias vec2i = Vector!( int, 2, "x", "y" );
+alias vec3i = Vector!( int, 3, "x", "y", "z" );
+alias vec4i = Vector!( int, 4, "x", "y", "z", "w" );
 
-alias vec2ui = Vector!( uint, 2 );
-alias vec3ui = Vector!( uint, 3 );
-alias vec4ui = Vector!( uint, 4 );
+alias vec2ui = Vector!( uint, 2, "x", "y" );
+alias vec3ui = Vector!( uint, 3, "x", "y", "z" );
+alias vec4ui = Vector!( uint, 4, "x", "y", "z", "w" );
 
-alias vec2f = Vector!( float, 2 );
-alias vec3f = Vector!( float, 3 );
-alias vec4f = Vector!( float, 4 );
+alias vec2f = Vector!( float, 2, "x", "y");
+alias vec3f = Vector!( float, 3, "x", "y", "z" );
+alias vec4f = Vector!( float, 4, "x", "y", "z", "w" );
 
-alias vec2d = Vector!( double, 2 );
-alias vec3d = Vector!( double, 3 );
-alias vec4d = Vector!( double, 4 );
+alias vec2d = Vector!( double, 2, "x", "y");
+alias vec3d = Vector!( double, 3, "x", "y", "z" );
+alias vec4d = Vector!( double, 4, "x", "y", "z", "w" );
 
 unittest
 {

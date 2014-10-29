@@ -10,7 +10,6 @@ class ServerGui : IGui
     override IRenderProxy getNewRenderProxy( IRenderProxy.IRenderable renderable )
     {
         assert( 0, "Server can't render anything, you dumb shit!" );
-        return null;
     }
     
     override @property IWidget mainPanel()

@@ -14,9 +14,8 @@ import jamc.util.gpu.renderer;
 import jamc.util.color;
 import jamc.util.vector;
 
-import GL.glu;
-
 import std.algorithm;
+import std.conv : to;
 import std.stdio;
 
 class GuiRenderFormat
@@ -85,34 +84,34 @@ class GuiRenderFormat
 
     void begin()
     {   
-        glEnableClientState( GL_VERTEX_ARRAY );
-        glEnableClientState( GL_TEXTURE_COORD_ARRAY );
-        glEnableClientState( GL_COLOR_ARRAY );
+        glCall!glEnableClientState( GL_VERTEX_ARRAY );
+        glCall!glEnableClientState( GL_TEXTURE_COORD_ARRAY );
+        glCall!glEnableClientState( GL_COLOR_ARRAY );
         
         version( GuiRenderFormat_UsePackedFormat )
         {
-            glVertexPointer( 2, GL_SHORT, vertex_type.sizeof, glToOffset( 0 ) );
-            glColorPointer( 4, GL_UNSIGNED_BYTE, vertex_type.sizeof, glToOffset( 2*sizeof( GLshort ) ) );
-            glTexCoordPointer( 2, GL_FLOAT, vertex_type.sizeof, glToOffset( 2*sizeof( GLshort ) + 4*sizeof( GLubyte ) ) );
+            glCall!glVertexPointer( 2, GL_SHORT, vertex_type.sizeof.to!GLsizei, glToOffset(vertex_type.x.offsetof) );
+            glCall!glColorPointer( 4, GL_UNSIGNED_BYTE, vertex_type.sizeof.to!GLsizei, glToOffset(vertex_type.r.offsetof) );
+            glCall!glTexCoordPointer( 2, GL_FLOAT, vertex_type.sizeof.to!GLsizei, glToOffset(vertex_type.s.offsetof) );
         }
         else
         {
-            glVertexPointer( 2, GL_INT, vertex_type.sizeof, glToOffset( 0 ) );
-            glTexCoordPointer( 2, GL_FLOAT, vertex_type.sizeof, glToOffset( 2*GLint.sizeof ) );
-            glColorPointer( 4, GL_FLOAT, vertex_type.sizeof, glToOffset( 2*GLint.sizeof + 2*GLfloat.sizeof ) );
+            glCall!glVertexPointer( 2, GL_INT, vertex_type.sizeof.to!GLsizei, glToOffset(vertex_type.x.offsetof) );
+            glCall!glTexCoordPointer( 2, GL_FLOAT, vertex_type.sizeof.to!GLsizei, glToOffset(vertex_type.s.offsetof) );
+            glCall!glColorPointer( 4, GL_FLOAT, vertex_type.sizeof.to!GLsizei, glToOffset(vertex_type.r.offsetof) );
         }
     }
     
     void end()
     {
-        glDisableClientState( GL_VERTEX_ARRAY );
-        glDisableClientState( GL_COLOR_ARRAY );
-        glDisableClientState( GL_TEXTURE_COORD_ARRAY );
+        glCall!glDisableClientState( GL_VERTEX_ARRAY );
+        glCall!glDisableClientState( GL_COLOR_ARRAY );
+        glCall!glDisableClientState( GL_TEXTURE_COORD_ARRAY );
     }
     
     void draw( index_index_type indexStart, index_index_type indexCount, index_type vertexStart, index_type vertexCount )
     {
-        glDrawRangeElements( GL_TRIANGLES, vertexStart, vertexStart + vertexCount - 1 , 
+        glCall!glDrawRangeElements( GL_TRIANGLES, vertexStart, vertexStart + vertexCount - 1 , 
                              indexCount, GL_UNSIGNED_SHORT, glToOffset( indexStart * index_type.sizeof ) );
                              
         
@@ -218,38 +217,38 @@ public:
     
     override void enterElement( int depth )
     {
-        glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
-        glStencilOp( GL_KEEP, GL_KEEP, GL_KEEP );
-        glStencilFunc (GL_EQUAL, depth, 0xff);
+        glCall!glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
+        glCall!glStencilOp( GL_KEEP, GL_KEEP, GL_KEEP );
+        glCall!glStencilFunc (GL_EQUAL, depth, 0xff);
     }
     
     override void prepareStencilAddition( int depth )
     {
-        glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
-        glStencilOp( GL_KEEP, GL_KEEP, GL_INCR );
-        glStencilFunc (GL_EQUAL, depth, 0xff);
+        glCall!glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
+        glCall!glStencilOp( GL_KEEP, GL_KEEP, GL_INCR );
+        glCall!glStencilFunc (GL_EQUAL, depth, 0xff);
     }
     
     override void prepareStencilSubtraction( int depth )
     {
-        glStencilFunc (GL_EQUAL, depth+1, 0xff);
-        glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
-        glStencilOp( GL_KEEP, GL_KEEP, GL_DECR );
+        glCall!glStencilFunc (GL_EQUAL, depth+1, 0xff);
+        glCall!glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
+        glCall!glStencilOp( GL_KEEP, GL_KEEP, GL_DECR );
     }
     
     override void translate( int x, int y )
     {
-        glTranslated( x, y, 0.0 );
+        glCall!glTranslated( x, y, 0.0 );
     }
     
     override void pushTransform()
     {
-        glPushMatrix();
+        glCall!glPushMatrix();
     }
     
     override void popTransform()
     {
-        glPopMatrix();
+        glCall!glPopMatrix();
     }
 
     @property IGpuAllocator!( GuiRenderFormat.vertex_format ) vertexAllocator()
@@ -286,8 +285,8 @@ class ClientGui : IGui
     {
         m_game = game;
         m_format = new GuiRenderFormat();
-        m_vertexBuffer = new BufferObjectManager!( GuiRenderFormat.vertex_format )( GL_ARRAY_BUFFER_ARB, GL_DYNAMIC_DRAW );
-        m_indexBuffer = new BufferObjectManager!( GuiRenderFormat.index_format )( GL_ELEMENT_ARRAY_BUFFER_ARB, GL_DYNAMIC_DRAW );
+        m_vertexBuffer = new BufferObjectManager!( GuiRenderFormat.vertex_format )( GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW );
+        m_indexBuffer = new BufferObjectManager!( GuiRenderFormat.index_format )( GL_ELEMENT_ARRAY_BUFFER, GL_DYNAMIC_DRAW );
         m_vertexAllocator = new GpuAllocator!( typeof( m_vertexBuffer ) )( m_vertexBuffer, 8192 );
         m_indexAllocator = new GpuAllocator!( typeof( m_indexBuffer ) )( m_indexBuffer, 8192 );
     }
@@ -332,17 +331,17 @@ class ClientGui : IGui
     
     override void draw()
     {
-        glMatrixMode( GL_PROJECTION );
-        glLoadIdentity();
-        glOrtho( 0, m_game.gfx.screenSize[0], m_game.gfx.screenSize[1], 0, -1, 1 );
+        glCall!glMatrixMode( GL_PROJECTION );
+        glCall!glLoadIdentity();
+        glCall!glOrtho( 0, m_game.gfx.screenSize.x, m_game.gfx.screenSize.y, 0, -1, 1 );
         
-        glMatrixMode( GL_MODELVIEW );
-        glLoadIdentity();
+        glCall!glMatrixMode( GL_MODELVIEW );
+        glCall!glLoadIdentity();
         
-        glEnable( GL_STENCIL_TEST );
-        glEnable( GL_BLEND );
-        glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-        //glEnable( GL_TEXTURE_2D );
+        glCall!glEnable( GL_STENCIL_TEST );
+        glCall!glEnable( GL_BLEND );
+        glCall!glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+        //glCall!glEnable( GL_TEXTURE_2D );
         
         m_vertexBuffer.push();
         m_indexBuffer.push();
@@ -352,9 +351,9 @@ class ClientGui : IGui
         m_vertexBuffer.pop();
         m_indexBuffer.pop();
         
-        glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
-        glStencilOp( GL_KEEP, GL_KEEP, GL_KEEP );
-        glDisable( GL_STENCIL_TEST );
+        glCall!glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
+        glCall!glStencilOp( GL_KEEP, GL_KEEP, GL_KEEP );
+        glCall!glDisable( GL_STENCIL_TEST );
     }
     
 private:

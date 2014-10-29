@@ -56,7 +56,7 @@ class StencilRenderable : IRenderProxy.IRenderable
         
         void draw( IRenderProxy r )
         {
-            r.drawQuad( 0, 0, m_parent.size[0], m_parent.size[1] );
+            r.drawQuad( 0, 0, m_parent.size.x, m_parent.size.y );
         }
         
     private:
@@ -102,7 +102,7 @@ public:
     {
         // BaseWidget se nijak nevykresluje
         //m_renderer.redraw();
-        r.drawHorizontalGradient( 0, 0, size[0], size[1], rgba( 1.0f, 0.0f, 0.0f, 1.0f ), rgba( 0.0f, 1.0f, 0.0f, 0.0f ) ); 
+        r.drawHorizontalGradient( 0, 0, size.x, size.y, rgba( 1.0f, 0.0f, 0.0f, 1.0f ), rgba( 0.0f, 1.0f, 0.0f, 0.0f ) ); 
     }
     
     override void doDraw( int depth )
@@ -117,7 +117,7 @@ public:
         {
             if( child.visible ){
                 m_renderer.pushTransform();
-                m_renderer.translate( child.position[0], child.position[1] );
+                m_renderer.translate( child.position.x, child.position.y );
                 child.doDraw( depth + 1 );
                 m_renderer.popTransform();
             }
@@ -160,8 +160,8 @@ public:
     
     override bool isPointInside( vec2i point )
     {
-        return point[0] >= 0 && point[0] < m_size[0] && 
-               point[1] >= 0 && point[1] < m_size[1];
+        return point.x >= 0 && point.x < m_size.x && 
+               point.y >= 0 && point.y < m_size.y;
     }
     
     override @property void visible( bool visible )

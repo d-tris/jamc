@@ -1,0 +1,28 @@
+{
+	"name": "jamc",
+	"targetType": "executable",
+	"dependencies": {},
+	"libs": ["freetype", "ftgl"],
+	"sourcePaths": [],
+	"importPaths": [],
+	"configurations": [
+		{
+			"name": "jamc-server",
+			"targetName": "jamc-server",
+			"versions": ["JamcServer"],
+			"sourcePaths": ["source/api", "source/common", "source/server"],
+			"importPaths": ["source/api", "source/common", "source/server"]
+		},
+		{
+			"name": "jamc-client",
+			"targetName": "jamc-client",
+			"versions": ["JamcClient"],
+			"sourcePaths": ["source/api", "source/common", "source/client"],
+			"importPaths": ["source/api", "source/common", "source/client"],
+			"dependencies": {
+				"derelict-sdl2": ">=1.2.8",
+				"derelict-gl3": ">=1.0.10"
+			}
+		}
+	]
+}

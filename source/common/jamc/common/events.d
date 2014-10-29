@@ -13,9 +13,25 @@ private extern (C) void rt_detachDisposeEvent(Object h, DEvent e);
 class EventDispatcher : IEventDispatcher
 {
 public:
+	struct ListenerKey
+    {
+		TypeInfo typeInfo;
+		Object object;
+		//~ 
+		//~ bool opEquals(ref const ListenerKey other) const
+		//~ {
+			//~ return typeInfo == other && object is other.object;
+		//~ }
+		//~ 
+		//~ hash_t toHash() const
+		//~ {
+			//~ return 13 * typeInfo.toHash() ^ 31 * cast(size_t)cast(void*)object;
+		//~ }
+	}
+
     void removeListener( IEventListener listener )
     {
-        m_listeners[ tuple( listener.type, listener.source ) ].removeKey( listener );
+        m_listeners[ListenerKey(listener.type, listener.source)].removeKey( listener );
     }
     
 protected:
@@ -45,7 +61,7 @@ protected:
     {    
         if( source !is null )
         {
-            auto tree = m_listeners.get( tuple( type, source ), null );
+            auto tree = m_listeners.get(ListenerKey(type, source), null );
             if( tree !is null )
             {
                 foreach( listener; tree )
@@ -55,7 +71,7 @@ protected:
             }
         }
         
-        auto tree = m_listeners.get( tuple( type, cast(Object) null ), null );
+        auto tree = m_listeners.get(ListenerKey(type, cast(Object) null), null );
         if( tree !is null )
         {
             foreach( listener; tree )
@@ -67,9 +83,9 @@ protected:
     }
     override IEventListener onNewListener( IEventListener listener, Object guard )
     {
-        auto tree = m_listeners.get( tuple( listener.type, listener.source ), new ListenerList() );
+        auto tree = m_listeners.get(ListenerKey(listener.type, listener.source), new ListenerList() );
         tree.stableInsert( listener );
-        m_listeners[ tuple( listener.type, listener.source ) ] = tree;
+        m_listeners[ListenerKey(listener.type, listener.source ) ] = tree;
         if( guard !is null )
         {
             new ListenerGuard( this, listener, guard );
@@ -79,7 +95,7 @@ protected:
     
 private:
     alias RedBlackTree!( IEventListener, "cast(void*)a < cast(void*)b") ListenerList;
-    ListenerList[ Tuple!( TypeInfo, Object) ] m_listeners;
+    ListenerList[ListenerKey] m_listeners;
 }
 
 unittest

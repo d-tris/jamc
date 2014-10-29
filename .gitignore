@@ -1,6 +1,6 @@
-/src/CSFML/
-/obj
 /server.log
 /client.log
-/server
-/client
+/jamc-server
+/jamc-client
+/dub.selections.json
+/.dub

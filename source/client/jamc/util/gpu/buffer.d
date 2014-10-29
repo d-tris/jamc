@@ -28,44 +28,44 @@ class BufferObjectManager( BufferFormat )
     void allocate( size_type size )
     {
         clear();
-        glGenBuffers( 1, &m_buffer );
+        glCall!glGenBuffers( 1, &m_buffer );
         enforce( m_buffer, "Nedostali jsme OGL buffer" );
-        glPushBuffer( m_target, m_buffer );
-        glBufferData( m_target, size * value_type.sizeof, null, m_usage );
-        glPopBuffer( m_target );
+        glCall!glPushBuffer( m_target, m_buffer );
+        glCall!glBufferData( m_target, size * value_type.sizeof, null, m_usage );
+        glCall!glPopBuffer( m_target );
         m_capacity = size;
     }
     
     void resize( size_type newSize )
     {
         GLuint oldBuffer = m_buffer;
-        glPushBuffer( m_target, oldBuffer );
+        glCall!glPushBuffer( m_target, oldBuffer );
 
-        auto oldData = glMapBuffer( m_target, GL_READ_ONLY );
+        auto oldData = glCall!glMapBuffer( m_target, GL_READ_ONLY );
 
-        glGenBuffers( 1, &m_buffer );
-        glPushBuffer( m_target, m_buffer );
-        // tady bude asi nutne pouzit kombinaci glBufferData pro vytvoreni
-        // prostoru a glBufferSubData pro nakopirovani dat
-        glBufferData( m_target, ( newSize, m_capacity ) * value_type.sizeof, oldData, m_usage );
+        glCall!glGenBuffers( 1, &m_buffer );
+        glCall!glPushBuffer( m_target, m_buffer );
+        // tady bude asi nutne pouzit kombinaci glCall!glBufferData pro vytvoreni
+        // prostoru a glCall!glBufferSubData pro nakopirovani dat
+        glCall!glBufferData( m_target, ( newSize, m_capacity ) * value_type.sizeof, oldData, m_usage );
         m_capacity = newSize;
-        glPopBuffer( m_target );
-        glPopBuffer( m_target );
+        glCall!glPopBuffer( m_target );
+        glCall!glPopBuffer( m_target );
 
-        glDeleteBuffers( 1, &oldBuffer );
+        glCall!glDeleteBuffers( 1, &oldBuffer );
     }
     
     void upload( value_type[] data, size_type start )
     {
-        glPushBuffer( m_target, m_buffer );
-        glBufferSubData( m_target, start * value_type.sizeof, data.length * value_type.sizeof, data.ptr );
-        glPopBuffer( m_target );
+        glCall!glPushBuffer( m_target, m_buffer );
+        glCall!glBufferSubData( m_target, start * value_type.sizeof, data.length * value_type.sizeof, data.ptr );
+        glCall!glPopBuffer( m_target );
     }
     
     void clear()
     {
         if( m_buffer != 0 )
-            glDeleteBuffers( 1, &m_buffer );
+            glCall!glDeleteBuffers( 1, &m_buffer );
     }
     
     @property size_type capacity()
@@ -75,12 +75,12 @@ class BufferObjectManager( BufferFormat )
 
     void push()
     {
-        glPushBuffer( m_target, m_buffer );
+        glCall!glPushBuffer( m_target, m_buffer );
     }
     
     void pop()
     {
-        glPopBuffer( m_target );
+        glCall!glPopBuffer( m_target );
     }
 
 private:

@@ -26,7 +26,7 @@ class Button : AbstractButton
         mult *= m_pressed ? 0.75f : 1.0f;
 
         r.drawVerticalGradient(
-            1, 1, size[0] - 2, size[1] - 2, 
+            1, 1, size.x - 2, size.y - 2, 
             rgba( 1.0, 1.0, 1.0, 0.8 ) * mult, 
             rgba( 0.5, 0.5, 0.5, 0.8 ) * mult
         );
